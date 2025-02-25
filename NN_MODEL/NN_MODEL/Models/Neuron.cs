@@ -23,12 +23,17 @@ namespace NN_MODEL.Models
         public Neuron(ILayer parentLayer)
         {
             _parentLayer = parentLayer;
-            _bias = Utility.Rand.NextDouble();
+            _bias = (Utility.Rand.NextDouble() * 2) - 1;
+        }
+        public Neuron(ILayer parentLayer, double bias)
+        {
+            _parentLayer = parentLayer;
+            _bias = bias;
         }
         
         public void AdjustBias(double adjustValue)
         {
-            this._bias-=adjustValue;
+            this._bias+=adjustValue;
         }
     }
 }

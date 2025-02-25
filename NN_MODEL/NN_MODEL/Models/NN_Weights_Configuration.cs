@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NN_MODEL.Models
 {
-    class NN_Weights_Configuration
+    public class NN_Weights_Configuration
     {
         readonly Dictionary<string, Weight> _weights;
         private int __index;
@@ -37,7 +37,7 @@ namespace NN_MODEL.Models
         private void InitializeWeightsValues()
         {
             foreach (var key in _weights.Keys)
-                _weights[key].Value = Utility.Rand.NextDouble();
+                _weights[key].Value = (Utility.Rand.NextDouble() * 2) - 1;
         }
         public void BuildNeuralNetwork()
         {
