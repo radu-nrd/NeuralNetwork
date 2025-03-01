@@ -35,5 +35,10 @@ namespace NN_MODEL.Models
         {
             this._bias+=adjustValue;
         }
+
+        public void SetBias(double bias)
+        {
+            this._bias = bias;
+        }
     }
 }

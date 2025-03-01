@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace NN_MODEL.Models
 {
@@ -11,34 +12,24 @@ namespace NN_MODEL.Models
         Backward,
     }
 
-    public class NeuralNetworkModel
+    public partial class NeuralNetworkModel
     {
         readonly List<ILayer> _layers;
-        //readonly
-        public NN_Weights_Configuration _config;
-
         public IReadOnlyCollection<ILayer> Layers => _layers;
 
         public NeuralNetworkModel()
         {
             _layers = new List<ILayer>();
-            _config = new NN_Weights_Configuration(this);
-        }
-        public void Build()
-        {
-            _config.BuildNeuralNetwork();
+            _index = 1;
+            _weights = new Dictionary<string, Weight>();
+            _regex = new Regex(@"W\$(N\d+)\$(N\d+)");
+            LearningRate = 0.1;
         }
         public void AppendLayer(ILayer layer)
         {
-            //if (_layers.Any())
-            //{
-            //    var lastLayer = _layers.Last();
-            //    foreach(var n1 in  lastLayer.Neurons)
-            //        foreach(var n2 in layer.Neurons)
-            //            BuildWeightMapEntry(n1, n2);
-            //}
             _layers.Add(layer);
         }
+        
         public IEnumerable<double> Predict(IEnumerable<double> input)
         {
             IEnumerable<double> _tmpData;
@@ -76,14 +67,7 @@ namespace NN_MODEL.Models
             return expValues.Select(v => v / sumExp);
             
         }
-        private double BinaryCrossEntropy(IEnumerable<double> prediction, IEnumerable<double> outcome)
-        {
-            double sum = 0.0;
-            for (int i = 0; i < prediction.Count(); i++)
-                sum += -outcome.ElementAt(i) * Math.Log(prediction.ElementAt(i) + 1e-8)
-                       - (1 - outcome.ElementAt(i)) * Math.Log(1 - prediction.ElementAt(i) + 1e-8);
-            return sum / prediction.Count();
-        }
+        
         private double MSE(IEnumerable<double> prediction, IEnumerable<double> outcome)
         {
             double sum = 0.0;
@@ -91,29 +75,33 @@ namespace NN_MODEL.Models
                 sum += Math.Pow(prediction.ElementAt(i) - outcome.ElementAt(i), 2);
             return sum;
         }
-        public void Train(IEnumerable<double> input, IEnumerable<double> outcome)
+        public void Train(double[][] batch, double[][] outcome,int epochs)
         {
-            IEnumerable<double> _tmpData;
-            Dictionary<int, IEnumerable<double>> _tmpForwardSave = new Dictionary<int, IEnumerable<double>>();
-            _tmpData = input;
-            _tmpForwardSave.Add(_layers.First().Index, input);
-            for (int i = 1; i < _layers.Count - 1; i++)
+            for(int e = 0; e < epochs; e++)
             {
-                _tmpData = Forward(_layers[i], _tmpData);
-                _tmpData = ApplySigmoid(_tmpData);
-                _tmpForwardSave.Add(_layers[i].Index, _tmpData);
+                double totalError = 0.0;
+                for (int i = 0; i < batch.Length; i++)
+                {
+                    var data = batch[i];
+                    var prediction = outcome[i];
+                    Train(data, prediction, out var error);
+                    totalError += error;
+                }
+                Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
             }
-            _tmpData = Forward(_layers.Last(), _tmpData);
-            var prediction = ApplySigmoid(_tmpData);
-            _tmpForwardSave.Add(_layers.Last().Index, prediction);
+        }
 
+        private void Train(IEnumerable<double> input, IEnumerable<double> outcome,out double error)
+        {
+            IEnumerable<double> prediction;
+            var _tmpForwardSave = GetDataFromForward(input,out prediction);
 
-            var loss = MSE(prediction, outcome);
-            Console.WriteLine($"Loss: {loss}");
+            error= MSE(prediction, outcome);
+            //Console.WriteLine($"Loss: {loss}");
 
-            
+            #region Backpropagation
             var outputError = new List<double>();
-            for(int i = 0; i < outcome.Count(); i++)
+            for (int i = 0; i < outcome.Count(); i++)
                 outputError.Add(outcome.ElementAt(i) - prediction.ElementAt(i));
 
             var outputGradient = CalculateGradient(outputError, prediction);
@@ -122,7 +110,7 @@ namespace NN_MODEL.Models
             for (int i = 0; i < _layers.Last().Neurons.Count; i++)
             {
                 var n = _layers.Last().Neurons.ElementAt(i);
-                n.AdjustBias(0.1 * lastGradient.ElementAt(i));
+                n.AdjustBias(LearningRate * lastGradient.ElementAt(i));
             }
 
             for (int i = _layers.Count - 2; i > 0; i--)
@@ -134,6 +122,25 @@ namespace NN_MODEL.Models
                 UpdateBiases(_layers.ElementAt(i), lastGradient);
             }
             UpdateWeights(_layers.First(), lastGradient, _tmpForwardSave[_layers.First().Index]);
+            #endregion
+        }
+
+        private Dictionary<int,IEnumerable<double>> GetDataFromForward(IEnumerable<double> input, out IEnumerable<double> prediction)
+        {
+            Dictionary<int, IEnumerable<double>> _tmpForwardSave = new Dictionary<int, IEnumerable<double>>();
+            var _tmpData = input;
+            _tmpForwardSave.Add(_layers.First().Index, input);
+            for (int i = 1; i < _layers.Count - 1; i++)
+            {
+                _tmpData = Forward(_layers[i], _tmpData);
+                _tmpData = ApplySigmoid(_tmpData);
+                _tmpForwardSave.Add(_layers[i].Index, _tmpData);
+            }
+            _tmpData = Forward(_layers.Last(), _tmpData);
+            prediction = ApplySigmoid(_tmpData);
+            _tmpForwardSave.Add(_layers.Last().Index, prediction);
+
+            return _tmpForwardSave;
         }
 
         private void UpdateBiases(ILayer layer, IEnumerable<double> gradient)
@@ -143,7 +150,7 @@ namespace NN_MODEL.Models
             for(int i = 0; i < layer.Neurons.Count; i++)
             {
                 var n = layer.Neurons.ElementAt(i);
-                n.AdjustBias(0.1*gradient.ElementAt(i));
+                n.AdjustBias(LearningRate * gradient.ElementAt(i));
             }
         }
         private void UpdateWeights(ILayer layer,IEnumerable<double> gradient,IEnumerable<double> forwardData)
@@ -154,11 +161,11 @@ namespace NN_MODEL.Models
             for(int i = 0;i<layer.Neurons.Count();i++)
             {
                 var n = layer.Neurons.ElementAt(i);
-                var weightsKeys = _config.GetWeightKeys(n, Direction.Backward);
+                var weightsKeys = this.GetWeightKeys(n, Direction.Backward);
                 if (weightsKeys.Count() != gradient.Count())
                     throw new ArgumentException("The gradient count don't match the weights count for backward!");
                 for (int j = 0; j < weightsKeys.Count(); j++)
-                    _config[weightsKeys.ElementAt(j)] += 0.1 * gradient.ElementAt(j)*forwardData.ElementAt(i);
+                    _weights[weightsKeys.ElementAt(j)].Value += LearningRate * gradient.ElementAt(j)*forwardData.ElementAt(i);
             }
 
         }
@@ -192,7 +199,7 @@ namespace NN_MODEL.Models
 
         private double Forward(INeuron neuron,IEnumerable<double>data)
         {
-            var weightValues = _config.GetWeightValues(neuron, Direction.Forward);
+            var weightValues = this.GetWeightValues(neuron, Direction.Forward);
             var rez = double.NaN;
             if (data.Count() == weightValues.Count())
             {
@@ -215,7 +222,7 @@ namespace NN_MODEL.Models
 
         private double Backward(INeuron neuron, IEnumerable<double> data)
         {
-            var weightValues = _config.GetWeightValues(neuron,Direction.Backward);
+            var weightValues = this.GetWeightValues(neuron,Direction.Backward);
             var rez = double.NaN;
             if(data.Count() == weightValues.Count())
             {

@@ -34,6 +34,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -47,6 +50,7 @@
     <Compile Include="Interfaces\ILayer.cs" />
     <Compile Include="Interfaces\INeuron.cs" />
     <Compile Include="Models\Layer.cs" />
+    <Compile Include="Models\NeuralNetworkIO.cs" />
     <Compile Include="Models\NeuralNetworkModel.cs" />
     <Compile Include="Models\Neuron.cs" />
     <Compile Include="Models\NN_Weights_Configuration.cs" />
@@ -55,6 +59,8 @@
     <Compile Include="TO_BE_DELETED.cs" />
     <Compile Include="Utility.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
