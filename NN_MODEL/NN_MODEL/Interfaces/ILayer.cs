@@ -10,6 +10,6 @@ namespace NN_MODEL.Interfaces
     {
         int Index {  get; }
         IReadOnlyCollection<INeuron> Neurons { get; }
-        void AppendNeurons(params INeuron[] neurons);
+        void AppendNeuron(INeuron neuron);
     }
 }

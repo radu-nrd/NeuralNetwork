@@ -14,5 +14,6 @@ namespace NN_MODEL.Interfaces
         double Bias { get; }
 
         void AdjustBias(double adjustValue);
+        void SetBias(double bias);
     }
 }

@@ -20,14 +20,11 @@ namespace NN_MODEL.Models
             _neurons = new List<INeuron>();
         }
 
-        public void AppendNeurons(params INeuron[] neurons)
+        public void AppendNeuron(INeuron neuron)
         {
-            if(neurons is null)
-                throw new ArgumentNullException("neurons was null");
-
-            foreach(var neuron in neurons)
-                if(!(neuron is null))
-                    _neurons.Add(neuron);
+            if(neuron is null)
+                throw new ArgumentNullException("neuron was null");
+            _neurons.Add(neuron);
         } 
     }
 }

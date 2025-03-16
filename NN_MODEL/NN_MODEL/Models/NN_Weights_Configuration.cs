@@ -1,6 +1,9 @@
-﻿using NN_MODEL.Interfaces;
+﻿using Newtonsoft.Json;
+using NN_MODEL.Interfaces;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -9,40 +12,21 @@ using System.Threading.Tasks;
 
 namespace NN_MODEL.Models
 {
-    class NN_Weights_Configuration
+    public partial class NeuralNetworkModel
     {
         readonly Dictionary<string, Weight> _weights;
-        private int __index;
-        readonly NeuralNetworkModel _main;
+        private int _index;
         readonly Regex _regex;
-        public NN_Weights_Configuration(NeuralNetworkModel main)
-        {
-            __index = 1;
-            _weights = new Dictionary<string, Weight>();
-            _main = main;
-            _regex = new Regex(@"W\$(N\d+)\$(N\d+)");
-        }
-        public double this[string key] {
-            get
-            {
-                if (_weights.ContainsKey(key))
-                    return _weights[key].Value;
-                throw new ArgumentException("Invalid key");
-            }
-            set
-            {
-                _weights[key].Value = value;
-            }
-        }
+        public double LearningRate { get; set; }
         private void InitializeWeightsValues()
         {
             foreach (var key in _weights.Keys)
-                _weights[key].Value = Utility.Rand.NextDouble();
+                _weights[key].Value = (Utility.Rand.NextDouble() * 2) - 1;
         }
         public void BuildNeuralNetwork()
         {
-            for (int i = 0; i < _main.Layers.Count - 1; i++)
-                BuildWeightMapEntry(_main.Layers.ElementAt(i), _main.Layers.ElementAt(i + 1));
+            for (int i = 0; i < Layers.Count - 1; i++)
+                BuildWeightMapEntry(Layers.ElementAt(i), Layers.ElementAt(i + 1));
             InitializeWeightsValues();
         }
 
@@ -82,12 +66,11 @@ namespace NN_MODEL.Models
         }
         private void BuildWeightMapEntry(INeuron n1, INeuron n2)
         {
-            var key = $"W{__index}";
+            var key = $"W{_index}";
             var value = new Weight { Mapping = $"W${n1.Tag}${n2.Tag}" };
             _weights.Add(key, value);
-            __index++;
+            _index++;
         }
-
-
+       
     }
 }
