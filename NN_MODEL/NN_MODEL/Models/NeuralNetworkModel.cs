@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace NN_MODEL.Models
 {
@@ -77,27 +78,36 @@ namespace NN_MODEL.Models
         }
         public void Train(double[][] batch, double[][] outcome,int epochs)
         {
-            for(int e = 0; e < epochs; e++)
+            Console.WriteLine("Starting Train!");
+            //foreach(var key in _weights.Keys)
+            //{
+            //    Console.WriteLine($"{key} : {_weights[key].Value}");
+            //}
+            //Console.WriteLine();
+            for (int e = 0;e<epochs;e++)
             {
                 double totalError = 0.0;
                 for (int i = 0; i < batch.Length; i++)
                 {
                     var data = batch[i];
-                    var prediction = outcome[i];
-                    Train(data, prediction, out var error);
-                    totalError += error;
+                    var valid_prediction = outcome[i];
+                    var network_prediction = Predict(data);
+                    totalError += MSE(network_prediction,valid_prediction);
+                    Train(data, valid_prediction);
                 }
                 Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
+                //foreach (var key in _weights.Keys)
+                //{
+                //    Console.WriteLine($"{key} : {_weights[key].Value}");
+                //}
+                //Console.WriteLine();
             }
         }
 
-        private void Train(IEnumerable<double> input, IEnumerable<double> outcome,out double error)
+        private void Train(IEnumerable<double> input, IEnumerable<double> outcome)
         {
             IEnumerable<double> prediction;
             var _tmpForwardSave = GetDataFromForward(input,out prediction);
-
-            error= MSE(prediction, outcome);
-            //Console.WriteLine($"Loss: {loss}");
 
             #region Backpropagation
             var outputError = new List<double>();
@@ -207,7 +217,7 @@ namespace NN_MODEL.Models
                 for (int i = 0; i < data.Count(); i++)
                     rez += weightValues.ElementAt(i) * data.ElementAt(i);
             }
-            if (rez == double.NaN)
+            if (double.IsNaN(rez))
                 throw new ArgumentException("The given data cannot be forward!");
             return rez;
         }
@@ -230,7 +240,7 @@ namespace NN_MODEL.Models
                 for (int i = 0; i < data.Count(); i++)
                     rez += weightValues.ElementAt(i) * data.ElementAt(i);
             }
-            if (rez == double.NaN)
+            if (double.IsNaN(rez))
                 throw new ArgumentException("The given data cannot be backward!");
             return rez;
         }

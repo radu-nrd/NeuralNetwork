@@ -43,7 +43,7 @@ namespace NN_MODEL.Models
                 {
                     var neuron = new Neuron(layer);
                     neuron.SetBias(Convert.ToDouble(n["Bias"]));
-                    layer.AppendNeurons(neuron);
+                    layer.AppendNeuron(neuron);
                 }
                 model.AppendLayer(layer);
             }
