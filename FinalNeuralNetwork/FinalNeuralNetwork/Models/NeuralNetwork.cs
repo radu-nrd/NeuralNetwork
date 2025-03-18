@@ -4,6 +4,7 @@ using FinalNeuralNetwork.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -41,6 +42,7 @@ namespace FinalNeuralNetwork.Models
                     return;
                 }
         }
+
         private void RandomInitializeLayer(ref double[] layer)
         {
             for(int i=0;i<layer.Length; i++)
@@ -83,6 +85,7 @@ namespace FinalNeuralNetwork.Models
             _aFunctions[idx] = actv;
         }
         private bool IsEmptyVector(double[] vector) => !vector.Any(x=>x!=0);
+        private bool CheckIfIsReadyForBuild() => !_layers.Any(l => l is null);
         public void AppendLayer(IEnumerable<double> layer, ActivationFunction actv)
         {
             this.AppendLayer(layer.ToArray(), actv);
@@ -90,7 +93,15 @@ namespace FinalNeuralNetwork.Models
 
         public void Build()
         {
-            throw new NotImplementedException();
+            if (!CheckIfIsReadyForBuild())
+                throw new NotReadyForBuildException("Failed to build network. One or more layers are null");
+
+            for(int i = 1;i< _layers.Length; i++)
+            {
+                var currentLayer = _layers[i];
+                var prevLayer = _layers[i - 1];
+                _weights[i] = new double[prevLayer.Length * currentLayer.Length];
+            }
         }
 
         public IReadOnlyCollection<double> Predict(double[] input)
@@ -116,6 +127,45 @@ namespace FinalNeuralNetwork.Models
         public void Train(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs)
         {
             throw new NotImplementedException();
+        }
+
+        private double[] ExtractDataFromArray(int startIndex,int count,double[] data)
+        {
+            double[] result = new double[startIndex+count];
+            for(int i = startIndex; i< startIndex+count; i++)
+                result[i] = data[i];
+            return result;
+        }
+
+        private Dictionary<int, double[]> GetDataFromForward(double[] input)
+        {
+            var _tmpForwardSave = new Dictionary<int, double[]>();
+            var _tmpData = input;
+            _tmpForwardSave.Add(0, input);
+            
+            for(int i = 1; i < _layers.Length; i++)
+            {
+                var biases = _layers[i];
+                var weights = _weights[i];
+                var forwardData = ForwardThroughNetwork(_tmpData, biases, weights);
+            }
+            return _tmpForwardSave;
+        }
+        private double[] ForwardThroughNetwork(double[] input,double[] layer, double[] weights)
+        {
+            double[] result = new double[layer.Length];
+            for(int n=0;n<layer.Length; n++)
+            {
+                var sum = layer[n];
+                var startIndex = n * input.Length;
+                var count = input.Length;
+                var pWeights = ExtractDataFromArray(startIndex, count, weights);
+
+                for (int i = 0; i < input.Length; i++)
+                    sum += input[i] * pWeights[i];
+                result[n] = sum;
+            }
+            return result;
         }
 
         
