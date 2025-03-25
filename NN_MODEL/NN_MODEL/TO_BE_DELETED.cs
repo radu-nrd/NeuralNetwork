@@ -38,6 +38,8 @@ namespace NN_MODEL
             var model = NeuralNetworkModel.LoadModel("testGPU_Stability.nn");
             model.Setup();
 
+            var prediction = model.Predict(new double[] { 0.33, 0.21 });
+
             Random rand = new Random();
             //double[] array = new double[] { 0.33, 0.21 };
             //double[] array = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
@@ -45,45 +47,45 @@ namespace NN_MODEL
             //var dataFromCpu = model.Predict(array);
             //var dataFromGPU = model.PredictGPU(array);
 
-            double[][] batch = new double[4][]
-            {
-                new double[]{0.1,0.1},
-                new double[]{0.1,0.9},
-                new double[]{0.9,0.1},
-                new double[]{0.9,0.1}
-            };
+            //double[][] batch = new double[4][]
+            //{
+            //    new double[]{0.1,0.1},
+            //    new double[]{0.1,0.9},
+            //    new double[]{0.9,0.1},
+            //    new double[]{0.9,0.1}
+            //};
 
-            double[][] outcome = new double[4][]
-            {
-                new double[]{0.1},
-                new double[]{0.9},
-                new double[]{0.9},
-                new double[]{0.1},
-            };
+            //double[][] outcome = new double[4][]
+            //{
+            //    new double[]{0.1},
+            //    new double[]{0.9},
+            //    new double[]{0.9},
+            //    new double[]{0.1},
+            //};
 
-            var watch = new System.Diagnostics.Stopwatch();
+            //var watch = new System.Diagnostics.Stopwatch();
 
-            watch.Start();
-            model.Train(batch, outcome, 1000);
-            watch.Stop();
-            Console.WriteLine();
-            Console.WriteLine($"Done CPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
-            Console.WriteLine();
+            //watch.Start();
+            //model.Train(batch, outcome, 1000);
+            //watch.Stop();
+            //Console.WriteLine();
+            //Console.WriteLine($"Done CPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
+            //Console.WriteLine();
 
-            Console.ReadKey();
-            Console.WriteLine("GPU TEST");
-            Console.WriteLine();
-            watch.Reset();
-            watch.Start();
-            model.TrainOnGPU(batch, outcome, 1000);
-            watch.Stop();
-            Console.WriteLine($"Done GPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
-            Console.ReadKey();
+            //Console.ReadKey();
+            //Console.WriteLine("GPU TEST");
+            //Console.WriteLine();
+            //watch.Reset();
+            //watch.Start();
+            //model.TrainOnGPU(batch, outcome, 1000);
+            //watch.Stop();
+            //Console.WriteLine($"Done GPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
+            //Console.ReadKey();
 
-            //var predictAfterTrainCPU = model.Predict(array);
-            //var predictAfterTrainGPU = model.PredictGPU(array);
+            ////var predictAfterTrainCPU = model.Predict(array);
+            ////var predictAfterTrainGPU = model.PredictGPU(array);
 
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         static void SaveBuiltNeuralNetwork()

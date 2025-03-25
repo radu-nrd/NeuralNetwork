@@ -1,5 +1,7 @@
-﻿using FinalNeuralNetwork.Models;
+﻿using FinalNeuralNetwork.Exceptions;
+using FinalNeuralNetwork.Models;
 using FinalNeuralNetwork.Utils;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +13,7 @@ namespace FinalNeuralNetwork.Interfaces
     /// <summary>
     /// Base Interface of a Neural Network Model
     /// </summary>
-    public interface INeuralNetwork
+    public partial interface INeuralNetwork
     {
         /// <summary>
         /// Impact of learning in training process.
@@ -111,13 +113,27 @@ namespace FinalNeuralNetwork.Interfaces
         void Build();
 
         /// <summary>
+        /// Save the current model.
+        /// </summary>
+        /// <param name="filePath">Path to the favorite destination to save model. The file should 
+        /// be a *.nn extension to work.
+        /// </param>
+        void Save(string filePath);
+
+        /// <summary>
         /// Parse an existing network.
         /// </summary>
         /// <param name="filePath">Path to the file. Extension must be *.nn</param>
         /// <returns>Neural Network Model based on file.</returns>
-        static INeuralNetwork Parse(string filePath)
+        static INeuralNetwork Load(string filePath)
         {
-           throw new NotImplementedException();
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentNullException("filePath is null or empty!");
+
+            if (!Path.GetExtension(filePath).ToLower().Trim().Equals(".nn"))
+                throw new InvalidFileExtensionException("The given file is not an *.nn file!");
+
+            return NeuralNetwork.Read(filePath);
         }
 
         /// <summary>

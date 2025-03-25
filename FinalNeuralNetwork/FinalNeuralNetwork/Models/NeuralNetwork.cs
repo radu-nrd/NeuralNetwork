@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace FinalNeuralNetwork.Models
 {   
-    sealed class NeuralNetwork : INeuralNetwork
+    sealed partial class NeuralNetwork : INeuralNetwork
     {
 
         private readonly double[][] _layers;
@@ -22,10 +22,17 @@ namespace FinalNeuralNetwork.Models
         private double _error;
 
         public double LearningRate { get => _lr; set { _lr = value; } }
-        public double Error => _error;
+
         public bool IsBuilt => _isBuilt;
 
-        
+        public double[][] Weights => _weights;
+
+        public double[][] Layers => _layers;
+
+        public ActivationFunction[] ActivationFunctions => _aFunctions;
+
+        public double Error => _error;
+
         public NeuralNetwork(int layersCount)
         {
             _layers = new double[layersCount][];
@@ -101,17 +108,24 @@ namespace FinalNeuralNetwork.Models
                 var currentLayer = _layers[i];
                 var prevLayer = _layers[i - 1];
                 _weights[i] = new double[prevLayer.Length * currentLayer.Length];
+                RandomInitializeWeights(i);
             }
+            this._isBuilt = true;
         }
-
+        private void RandomInitializeWeights(int idx)
+        {
+            var weights = _weights[idx];
+            for(int i = 0;i<weights.Length;i++)
+                weights[i] = (Utils.Utils.Random.NextDouble() * 2) - 1;
+        }
         public IReadOnlyCollection<double> Predict(double[] input)
         {
-            throw new NotImplementedException();
+            return GetDataFromForward(input).Last().Value;
         }
 
         public IReadOnlyCollection<double> Predict(IEnumerable<double> input)
         {
-            throw new NotImplementedException();
+            return this.Predict(input.ToArray());
         }
 
         public void Train(double[][] batch, double[][] validResult, int epochs)
@@ -131,9 +145,9 @@ namespace FinalNeuralNetwork.Models
 
         private double[] ExtractDataFromArray(int startIndex,int count,double[] data)
         {
-            double[] result = new double[startIndex+count];
-            for(int i = startIndex; i< startIndex+count; i++)
-                result[i] = data[i];
+            double[] result = new double[count];
+            for(int i = 0; i < count; i++)
+                result[i] = data[startIndex + i];
             return result;
         }
 
@@ -147,7 +161,9 @@ namespace FinalNeuralNetwork.Models
             {
                 var biases = _layers[i];
                 var weights = _weights[i];
-                var forwardData = ForwardThroughNetwork(_tmpData, biases, weights);
+                _tmpData = ForwardThroughNetwork(_tmpData, biases, weights);
+                ApplyActivationFunction(_aFunctions[i], ref _tmpData);
+                _tmpForwardSave.Add(i, _tmpData);
             }
             return _tmpForwardSave;
         }
@@ -167,7 +183,5 @@ namespace FinalNeuralNetwork.Models
             }
             return result;
         }
-
-        
     }
 }
