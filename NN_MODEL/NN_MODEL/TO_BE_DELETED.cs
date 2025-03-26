@@ -33,14 +33,13 @@ namespace NN_MODEL
             //model.BuildNeuralNetwork();
             //model.Setup();
 
-            //model.SaveModel("testGPU_Stability.nn");
+            //model.SaveModel("test_new_merged.nn");
 
             var model = NeuralNetworkModel.LoadModel("testGPU_Stability.nn");
             model.Setup();
-
             var prediction = model.Predict(new double[] { 0.33, 0.21 });
 
-            Random rand = new Random();
+            //Random rand = new Random();
             //double[] array = new double[] { 0.33, 0.21 };
             //double[] array = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
 
@@ -52,7 +51,7 @@ namespace NN_MODEL
             //    new double[]{0.1,0.1},
             //    new double[]{0.1,0.9},
             //    new double[]{0.9,0.1},
-            //    new double[]{0.9,0.1}
+            //    new double[]{0.9,0.9}
             //};
 
             //double[][] outcome = new double[4][]

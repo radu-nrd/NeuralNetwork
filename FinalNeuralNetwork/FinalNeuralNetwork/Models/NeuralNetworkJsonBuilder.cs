@@ -101,7 +101,7 @@ namespace FinalNeuralNetwork.Models
             for (int w = 1; w < model.Weights.Length; w++)
                 WriteWeightsForLayer(ref jsonWriter, model.Weights[w], w);
         }
-        void WriteWeightsForLayer(ref JsonTextWriter jsonWriter, double[] layerWeights, int idx)
+        void WriteWeightsForLayer(ref JsonTextWriter jsonWriter, double[][] layerWeights, int idx)
         {
             jsonWriter.WritePropertyName($"Weight{idx}");
             jsonWriter.WriteStartObject();
@@ -110,12 +110,31 @@ namespace FinalNeuralNetwork.Models
             jsonWriter.WriteValue(idx);
 
             jsonWriter.WritePropertyName("Values");
+            jsonWriter.WriteStartObject();
+            for(int i = 0;i< layerWeights.Length; i++)
+            {
+                jsonWriter.WritePropertyName($"Set{i}");
+                jsonWriter.WriteStartObject();
 
-            jsonWriter.WriteStartArray();
-            for (int i = 0; i < layerWeights.Length; i++)
-                jsonWriter.WriteValue(layerWeights[i]);
-            jsonWriter.WriteEndArray();
+                jsonWriter.WritePropertyName("Neuron_Index");
+                jsonWriter.WriteValue(i);
+
+                jsonWriter.WritePropertyName("Data");
+                jsonWriter.WriteStartArray();
+                
+                for(int v=0;v< layerWeights[i].Length;v++)
+                    jsonWriter.WriteValue(layerWeights[i][v]);
+                jsonWriter.WriteEndArray();
+                jsonWriter.WriteEndObject();
+            }
             jsonWriter.WriteEndObject();
+            jsonWriter.WriteEndObject();
+
+            //jsonWriter.WriteStartArray();
+            //for (int i = 0; i < layerWeights.Length; i++)
+            //    jsonWriter.WriteValue(layerWeights[i]);
+            //jsonWriter.WriteEndArray();
+            //jsonWriter.WriteEndObject();
         }
 
     }

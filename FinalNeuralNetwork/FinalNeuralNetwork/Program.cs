@@ -13,9 +13,9 @@ Console.WriteLine("Hello, World!");
 //nn.AppendLayer(outputLayer);
 
 //nn.Build();
-//nn.Save("new_model_save.nn");
+//nn.Save("test_nn_new_format.nn");
 
-var nn = INeuralNetwork.Load("new_model_save.nn");
+var nn = INeuralNetwork.Load("test_nn_new_format.nn");
 var prediction = nn.Predict([0.33, 0.21]);
 
 

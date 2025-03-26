@@ -14,7 +14,7 @@ namespace FinalNeuralNetwork.Models
     {
 
         private readonly double[][] _layers;
-        private readonly double[][] _weights;
+        private readonly double[][][] _weights;
         private readonly ActivationFunction[] _aFunctions;
 
         private double _lr;
@@ -25,7 +25,7 @@ namespace FinalNeuralNetwork.Models
 
         public bool IsBuilt => _isBuilt;
 
-        public double[][] Weights => _weights;
+        public double[][][] Weights => _weights;
 
         public double[][] Layers => _layers;
 
@@ -36,7 +36,7 @@ namespace FinalNeuralNetwork.Models
         public NeuralNetwork(int layersCount)
         {
             _layers = new double[layersCount][];
-            _weights = new double[layersCount][];
+            _weights = new double[layersCount][][];
             _aFunctions = new ActivationFunction[layersCount];
         }
         private void GetFreeLayerPosition(out int idx)
@@ -107,14 +107,18 @@ namespace FinalNeuralNetwork.Models
             {
                 var currentLayer = _layers[i];
                 var prevLayer = _layers[i - 1];
-                _weights[i] = new double[prevLayer.Length * currentLayer.Length];
-                RandomInitializeWeights(i);
+                _weights[i] = new double[currentLayer.Length][];
+                for (int j = 0; j < _weights[i].Length; j++)
+                {
+                    _weights[i][j] = new double[prevLayer.Length];
+                    RandomInitializeWeights(i,j);
+                }
             }
             this._isBuilt = true;
         }
-        private void RandomInitializeWeights(int idx)
+        private void RandomInitializeWeights(int layerIdx,int neuronIdx)
         {
-            var weights = _weights[idx];
+            var weights = _weights[layerIdx][neuronIdx];
             for(int i = 0;i<weights.Length;i++)
                 weights[i] = (Utils.Utils.Random.NextDouble() * 2) - 1;
         }
@@ -142,43 +146,60 @@ namespace FinalNeuralNetwork.Models
         {
             throw new NotImplementedException();
         }
+        //private void _Train(double[] input, double[] validPrediction)
+        //{
+        //    var forwardData = GetDataFromForward(input);
+        //    var outputError = new double[]
+        //}
+        //private double[] CalculateGradient(int layerIdx)
+        //{
 
-        private double[] ExtractDataFromArray(int startIndex,int count,double[] data)
+        //}
+        private double[] BackwardThroughNetwork(double[] input, int layerIdx)
         {
-            double[] result = new double[count];
-            for(int i = 0; i < count; i++)
-                result[i] = data[startIndex + i];
+            var layerWeights = _weights[layerIdx + 1];
+            var layer = _layers[layerIdx];
+            var result = new double[layer.Length];
+
+            for (int n = 0; n < layer.Length; n++)
+            {
+                var nWeights = layerWeights[n];
+                var nRez = 0.0;
+                for (int i = 0; i < input.Length; i++)
+                    nRez += input[i] * nWeights[i];
+                result[n] = nRez;
+            }
             return result;
         }
-
         private Dictionary<int, double[]> GetDataFromForward(double[] input)
         {
             var _tmpForwardSave = new Dictionary<int, double[]>();
             var _tmpData = input;
+
             _tmpForwardSave.Add(0, input);
-            
             for(int i = 1; i < _layers.Length; i++)
-            {
-                var biases = _layers[i];
-                var weights = _weights[i];
-                _tmpData = ForwardThroughNetwork(_tmpData, biases, weights);
-                ApplyActivationFunction(_aFunctions[i], ref _tmpData);
-                _tmpForwardSave.Add(i, _tmpData);
-            }
+                _Forward(i, ref _tmpData, ref _tmpForwardSave);
+
             return _tmpForwardSave;
         }
-        private double[] ForwardThroughNetwork(double[] input,double[] layer, double[] weights)
+        private void _Forward(int layerIdx, ref double[] tempData, ref Dictionary<int, double[]>cache)
+        {
+            var layer = _layers[layerIdx];
+            var weights = _weights[layerIdx];
+            tempData = ForwardThroughNetwork(tempData, layer, weights);
+            ApplyActivationFunction(_aFunctions[layerIdx], ref tempData);
+            cache.Add(layerIdx, tempData);
+        }
+        private double[] ForwardThroughNetwork(double[] input, double[] layer, double[][] weights)
         {
             double[] result = new double[layer.Length];
             for(int n=0;n<layer.Length; n++)
             {
                 var sum = layer[n];
-                var startIndex = n * input.Length;
-                var count = input.Length;
-                var pWeights = ExtractDataFromArray(startIndex, count, weights);
+                var nWeights = weights[n];
 
                 for (int i = 0; i < input.Length; i++)
-                    sum += input[i] * pWeights[i];
+                    sum += input[i] * nWeights[i];
                 result[n] = sum;
             }
             return result;

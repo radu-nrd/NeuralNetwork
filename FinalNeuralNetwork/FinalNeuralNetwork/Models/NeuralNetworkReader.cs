@@ -29,8 +29,19 @@ namespace FinalNeuralNetwork.Models
             model._error = Convert.ToDouble(jsonObj["error"]);
 
             BuildLayersFromJson(jsonObj, ref model);
+            InitializeWeights(ref model);
             BuildWeightsFromJson(jsonObj, ref model);
             BuildActivationLayerFunctionsFromJson(jsonObj,ref model);
+        }
+        private static void InitializeWeights(ref NeuralNetwork model)
+        {
+            for(int i = 1; i < model.Weights.Length; i++)
+            {
+                model._weights[i] = new double[model.Layers[i].Length][];
+                for (int j = 0; j < model.Weights[i].Length; j++)
+                    model.Weights[i][j] = new double[model.Layers[i - 1].Length];
+            }
+
         }
         private static void BuildActivationLayerFunctionsFromJson(JObject jsonObj, ref NeuralNetwork model)
         {
@@ -48,9 +59,16 @@ namespace FinalNeuralNetwork.Models
             var weights = jsonObj["Weights"]!.Values();
             foreach(var weightSet in weights)
             {
-                var index = Convert.ToInt32(weightSet["Index"]);
-                var data = weightSet["Values"]!.Values().Select(Convert.ToDouble).ToArray();
-                model._weights[index] = data;
+                var layerIdx = Convert.ToInt32(weightSet["Index"]);
+                var sets = weightSet["Values"]!.Values();
+                foreach(var set in sets)
+                {
+                    var neuronIdx = Convert.ToInt32(set["Neuron_Index"]);
+                    var data = set["Data"]!.Values().Select(Convert.ToDouble).ToArray();
+                    model.Weights[layerIdx][neuronIdx] = data;
+                }
+                //var data = weightSet["Values"]!.Values().Select(Convert.ToDouble).ToArray();
+                //model._weights[index] = data;
             }
         }
 
