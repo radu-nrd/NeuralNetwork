@@ -1,4 +1,5 @@
 ﻿using FinalNeuralNetwork.Utils;
+using ILGPU.Runtime.Cuda;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,5 +27,11 @@ namespace FinalNeuralNetwork.Models
                 data[i] = Sigmoid(data[i]);
         }
         double Sigmoid(double x) => 1 / (1 + Math.Exp(-x));
+        double SigmoidDerivative(double x) => x * (1 - x);
+        void ApplySigmoidDerivative(ref double[] data)
+        {
+            for(int i = 0; i < data.Length; i++)
+                data[i] = SigmoidDerivative(data[i]);
+        }
     }
 }

@@ -35,9 +35,15 @@ namespace NN_MODEL
 
             //model.SaveModel("test_new_merged.nn");
 
-            var model = NeuralNetworkModel.LoadModel("testGPU_Stability.nn");
+            var model = NeuralNetworkModel.LoadModel("test_new_merged.nn");
             model.Setup();
             var prediction = model.Predict(new double[] { 0.33, 0.21 });
+
+            for(int i = 0;i<10;i++)
+                model.Train(new double[] { 0.33, 0.21 }, new double[] { 0.26 });
+
+            prediction = model.Predict(new double[] { 0.33, 0.21 });
+
 
             //Random rand = new Random();
             //double[] array = new double[] { 0.33, 0.21 };

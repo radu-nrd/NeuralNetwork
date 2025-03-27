@@ -107,6 +107,8 @@ namespace FinalNeuralNetwork.Interfaces
         /// <param name="epochs">Number of iterations. How many times batch will be passed through network</param>
         void Train(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs);
 
+        void _Train(double[] input, double[] validPrediction);
+
         /// <summary>
         /// This method will connect the layers and will create weighs between neurons.
         /// </summary>

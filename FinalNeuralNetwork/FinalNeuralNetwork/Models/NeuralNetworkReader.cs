@@ -67,8 +67,6 @@ namespace FinalNeuralNetwork.Models
                     var data = set["Data"]!.Values().Select(Convert.ToDouble).ToArray();
                     model.Weights[layerIdx][neuronIdx] = data;
                 }
-                //var data = weightSet["Values"]!.Values().Select(Convert.ToDouble).ToArray();
-                //model._weights[index] = data;
             }
         }
 

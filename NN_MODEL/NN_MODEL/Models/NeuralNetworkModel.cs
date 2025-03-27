@@ -104,7 +104,7 @@ namespace NN_MODEL.Models
             }
         }
 
-        private void Train(IEnumerable<double> input, IEnumerable<double> outcome)
+        public void Train(IEnumerable<double> input, IEnumerable<double> outcome)
         {
             IEnumerable<double> prediction;
             var _tmpForwardSave = GetDataFromForward(input,out prediction);

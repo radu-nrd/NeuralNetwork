@@ -146,29 +146,96 @@ namespace FinalNeuralNetwork.Models
         {
             throw new NotImplementedException();
         }
-        //private void _Train(double[] input, double[] validPrediction)
-        //{
-        //    var forwardData = GetDataFromForward(input);
-        //    var outputError = new double[]
-        //}
-        //private double[] CalculateGradient(int layerIdx)
-        //{
+        public void _Train(double[] input, double[] validPrediction)
+        {
+            #region Backpropagation Algorithm
+            var forwardData = GetDataFromForward(input);
+            var networkPrediction = forwardData.Last().Value;
+            var lastGradient = new double[1];
+            _TrainOutputLayer(networkPrediction, validPrediction, ref lastGradient);
 
-        //}
+            for(int i = _layers.Length - 2; i > 0; i--)
+            {
+                UpdateWeights(i, lastGradient, forwardData[i]);
+                var backwardData = BackwardThroughNetwork(lastGradient, i);
+                lastGradient = CalculateGradient(backwardData, forwardData[i], i);
+                UpdateBiases(i, lastGradient);
+            }
+
+            UpdateWeights(0, lastGradient, forwardData[0]);
+            #endregion
+
+        }
+        private void UpdateWeights(int layerIdx, double[] gradient, double[] forwardData)
+        {
+            for(int i = 0;i< _weights[layerIdx + 1].Length; i++) // layerWeights
+                for (int j = 0; j < _weights[layerIdx + 1][i].Length; j++) // neuronWeights
+                    _weights[layerIdx + 1][i][j] += LearningRate * gradient[i] * forwardData[j];
+        }
+        private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient)
+        {
+            var outputError = CalculateOutputError(networkPrediction, validPrediction);
+            lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
+            UpdateBiases(_layers.Length - 1, lastGradient);
+
+        }
+        private void UpdateBiases(int layerIdx, double[] gradient)
+        {
+            for(int i = 0;i < _layers[layerIdx].Length;i++)
+                _layers[layerIdx][i] += gradient[i] * LearningRate;
+        }
+        private double[] CalculateOutputError(double[] networkPrediction, double[] validPrediction)
+        {
+            var cache = new double[networkPrediction.Length];
+            for(int i = 0;i< cache.Length;i++)
+                cache[i] = validPrediction[i] - networkPrediction[i];
+            return cache;
+        }
+        private double[] CalculateGradient(double[] backwardInput, double[] forwardData,int layerIdx)
+        {
+            var cache = new double[backwardInput.Length];
+            EraseActivationFromData(ref forwardData, layerIdx);
+            for(int i = 0; i<cache.Length;i++)
+                cache[i] = backwardInput[i] * forwardData[i];
+            return cache;
+        }
+        private void EraseActivationFromData(ref double[] data,int layerIdx)
+        {
+            switch(_aFunctions[layerIdx])
+            {
+                case ActivationFunction.None:
+                    break;
+                case ActivationFunction.Sigmoid:
+                    ApplySigmoidDerivative(ref data);
+                    break;
+            }
+        }
         private double[] BackwardThroughNetwork(double[] input, int layerIdx)
         {
             var layerWeights = _weights[layerIdx + 1];
             var layer = _layers[layerIdx];
             var result = new double[layer.Length];
 
-            for (int n = 0; n < layer.Length; n++)
+            for(int j = 0; j < layerWeights.Length; j++)
             {
-                var nWeights = layerWeights[n];
-                var nRez = 0.0;
-                for (int i = 0; i < input.Length; i++)
-                    nRez += input[i] * nWeights[i];
-                result[n] = nRez;
+                var nWeights = layerWeights[j];
+                for(int n = 0; n < layer.Length; n++)
+                {
+                    var nRez = 0.0;
+                    for (int i = 0; i < input.Length; i++)
+                        nRez += input[i] * nWeights[n];
+                    result[n] = nRez;
+                }
             }
+
+            //for (int n = 0; n < layer.Length; n++)
+            //{
+            //    var nWeights = layerWeights[n];
+            //    var nRez = 0.0;
+            //    for (int i = 0; i < input.Length; i++)
+            //        nRez += input[i] * nWeights[i];
+            //    result[n] = nRez;
+            //}
             return result;
         }
         private Dictionary<int, double[]> GetDataFromForward(double[] input)
