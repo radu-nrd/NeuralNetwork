@@ -115,17 +115,6 @@ namespace NN_MODEL.Models
         public void TrainOnGPU(double[][] batch, double[][] outcome, int epochs)
         {
             Console.WriteLine("Starting Train!");
-            //var idx = 1;
-            //for(int i = 0; i < GPU_MODEL.Weights.Length; i++)
-            //{
-            //    var weights = GPU_MODEL.Weights[i];
-            //    for(int j = 0; j < weights.Length; j++)
-            //    {
-            //        Console.WriteLine($"W{idx} : {weights[j]}");
-            //        idx++;
-            //    }
-            //}
-            //Console.WriteLine();
             for (int e = 0; e < epochs; e++)
             {
                 double totalError = 0.0;
@@ -138,17 +127,6 @@ namespace NN_MODEL.Models
                     TrainGPU(data, valid_prediction);
                 }
                 Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
-                //idx = 1;
-                //for (int i = 0; i < GPU_MODEL.Weights.Length; i++)
-                //{
-                //    var weights = GPU_MODEL.Weights[i];
-                //    for (int j = 0; j < weights.Length; j++)
-                //    {
-                //        Console.WriteLine($"W{idx} : {weights[j]}");
-                //        idx++;
-                //    }
-                //}
-                //Console.WriteLine();
             }
         }
         private void TrainGPU(IEnumerable<double> input, IEnumerable<double> outcome)

@@ -134,35 +134,54 @@ namespace FinalNeuralNetwork.Models
 
         public void Train(double[][] batch, double[][] validResult, int epochs)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Starting Train!");
+            for(int e = 0; e < epochs; e++)
+            {
+                double totalError = 0.0;
+                for(int i = 0; i < batch.Length; i++)
+                {
+                    var data = batch[i];
+                    var validPrediction = validResult[i];
+                    var networkPrediction = Predict(data);
+                    totalError += MSE(networkPrediction, validPrediction);
+                    _Train(data, validPrediction);
+                }
+                Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
+            }
         }
 
         public void Train(double[,] batch, double[,] validResult, int epochs)
         {
-            throw new NotImplementedException();
+            var batchConverted = ConvertMatrixToDoubleArray(batch);
+            var validResConverted = ConvertMatrixToDoubleArray(validResult);
+            this.Train(batchConverted,validResConverted, epochs);   
+        }
+        private double[][] ConvertMatrixToDoubleArray(double[,] matrix)
+        {
+            var cache = new double[matrix.GetLength(0)][];
+            for(int i = 0;i<matrix.GetLength(0);i++)
+                for(int j = 0;j<matrix.GetLength(1);j++)
+                    cache[i][j] = matrix[i,j];
+            return cache;
         }
 
         public void Train(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs)
         {
-            throw new NotImplementedException();
+            var batchConverted = batch.Select(e=>e.ToArray()).ToArray();
+            var validResConverted = validResult.Select(e=>e.ToArray()).ToArray();
+            this.Train(batchConverted, validResConverted, epochs);  
         }
-        public void _Train(double[] input, double[] validPrediction)
+        private void _Train(double[] input, double[] validPrediction)
         {
             #region Backpropagation Algorithm
             var forwardData = GetDataFromForward(input);
             var networkPrediction = forwardData.Last().Value;
             var lastGradient = new double[1];
+
             _TrainOutputLayer(networkPrediction, validPrediction, ref lastGradient);
-
-            for(int i = _layers.Length - 2; i > 0; i--)
-            {
-                UpdateWeights(i, lastGradient, forwardData[i]);
-                var backwardData = BackwardThroughNetwork(lastGradient, i);
-                lastGradient = CalculateGradient(backwardData, forwardData[i], i);
-                UpdateBiases(i, lastGradient);
-            }
-
-            UpdateWeights(0, lastGradient, forwardData[0]);
+            for (int i = _layers.Length - 2; i > 0; i--)
+                _TrainHiddenLayer(i, forwardData[i], ref lastGradient);
+            _TrainInputLayer(lastGradient, forwardData[0]);
             #endregion
 
         }
@@ -171,6 +190,17 @@ namespace FinalNeuralNetwork.Models
             for(int i = 0;i< _weights[layerIdx + 1].Length; i++) // layerWeights
                 for (int j = 0; j < _weights[layerIdx + 1][i].Length; j++) // neuronWeights
                     _weights[layerIdx + 1][i][j] += LearningRate * gradient[i] * forwardData[j];
+        }
+        private void _TrainInputLayer(double[] gradient, double[] forwardData)
+        {
+            UpdateWeights(0, gradient, forwardData);
+        }
+        private void _TrainHiddenLayer(int layerIdx, double[] forwardData,ref double[] lastGradient)
+        {
+            UpdateWeights(layerIdx, lastGradient, forwardData);
+            var backwardData = BackwardThroughNetwork(lastGradient, layerIdx);
+            lastGradient = CalculateGradient(backwardData, forwardData, layerIdx);
+            UpdateBiases(layerIdx, lastGradient);
         }
         private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient)
         {
@@ -227,15 +257,6 @@ namespace FinalNeuralNetwork.Models
                     result[n] = nRez;
                 }
             }
-
-            //for (int n = 0; n < layer.Length; n++)
-            //{
-            //    var nWeights = layerWeights[n];
-            //    var nRez = 0.0;
-            //    for (int i = 0; i < input.Length; i++)
-            //        nRez += input[i] * nWeights[i];
-            //    result[n] = nRez;
-            //}
             return result;
         }
         private Dictionary<int, double[]> GetDataFromForward(double[] input)
@@ -270,6 +291,13 @@ namespace FinalNeuralNetwork.Models
                 result[n] = sum;
             }
             return result;
+        }
+        private double MSE(IEnumerable<double> prediction, IEnumerable<double> outcome)
+        {
+            double sum = 0.0;
+            for (int i = 0; i < prediction.Count(); i++)
+                sum += Math.Pow(prediction.ElementAt(i) - outcome.ElementAt(i), 2);
+            return sum;
         }
     }
 }

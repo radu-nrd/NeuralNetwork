@@ -14,8 +14,8 @@ namespace FinalNeuralNetwork.Models
         public static NeuralNetwork Read(string filePath)
         {
             var data = File.ReadAllBytes(filePath);
-            //for (int i = 0; i < data.Length; i++)
-            //    data[i] = (byte)(data[i] - 26);
+            for (int i = 0; i < data.Length; i++)
+                data[i] = (byte)(data[i] - 26);
             var dataString = Encoding.UTF8.GetString(data);
             JObject jsonObj = JObject.Parse(dataString);
             BuildModel(jsonObj, out var model);

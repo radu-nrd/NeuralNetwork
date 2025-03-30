@@ -129,12 +129,6 @@ namespace FinalNeuralNetwork.Models
             }
             jsonWriter.WriteEndObject();
             jsonWriter.WriteEndObject();
-
-            //jsonWriter.WriteStartArray();
-            //for (int i = 0; i < layerWeights.Length; i++)
-            //    jsonWriter.WriteValue(layerWeights[i]);
-            //jsonWriter.WriteEndArray();
-            //jsonWriter.WriteEndObject();
         }
 
     }

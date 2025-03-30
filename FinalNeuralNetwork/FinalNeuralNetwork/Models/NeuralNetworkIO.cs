@@ -20,10 +20,10 @@ namespace FinalNeuralNetwork.Models
 
             var jsonBuilder = new NeuralNetworkJsonBuilder(this);
             jsonBuilder.BuildJsonFile(filePath);
-            //var data = File.ReadAllBytes(filePath);
-            //for (int i = 0; i < data.Length; i++)
-            //    data[i] = (byte)(data[i] + 26);
-            //File.WriteAllBytes(filePath, data);
+            var data = File.ReadAllBytes(filePath);
+            for (int i = 0; i < data.Length; i++)
+                data[i] = (byte)(data[i] + 26);
+            File.WriteAllBytes(filePath, data);
         }
 
     }

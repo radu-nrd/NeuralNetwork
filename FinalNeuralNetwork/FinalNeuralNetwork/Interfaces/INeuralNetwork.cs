@@ -13,7 +13,7 @@ namespace FinalNeuralNetwork.Interfaces
     /// <summary>
     /// Base Interface of a Neural Network Model
     /// </summary>
-    public partial interface INeuralNetwork
+    public interface INeuralNetwork : ITrainable,IPredictable,ISaveable
     {
         /// <summary>
         /// Impact of learning in training process.
@@ -29,20 +29,6 @@ namespace FinalNeuralNetwork.Interfaces
         /// True if neural network is connected, False otherwise.
         /// </summary>
         bool IsBuilt {  get; }
-
-        /// <summary>
-        /// Push data through network.
-        /// </summary>
-        /// <param name="input">Data to be passed through network.</param>
-        /// <returns>Prediction after computational operations.</returns>
-        IReadOnlyCollection<double> Predict(double[] input);
-
-        /// <summary>
-        /// Push data through network.
-        /// </summary>
-        /// <param name="input">Data to be passed through network.</param>
-        /// <returns>Prediction after computational operations.</returns>
-        IReadOnlyCollection<double> Predict(IEnumerable<double> input);
 
         /// <summary>
         /// Append layer to the network. Biases of neurons will be created randomly
@@ -84,43 +70,9 @@ namespace FinalNeuralNetwork.Interfaces
         void AppendLayer(IEnumerable<double> layer, ActivationFunction actv);
 
         /// <summary>
-        /// Start the training process of the network.
-        /// </summary>
-        /// <param name="batch">Batch of data</param>
-        /// <param name="validResult">Valid result for each data in the batch</param>
-        /// <param name="epochs">Number of iterations. How many times batch will be passed through network</param>
-        void Train(double[][] batch, double[][] validResult, int epochs);
-
-        /// <summary>
-        /// Start the training process of the network.
-        /// </summary>
-        /// <param name="batch">Batch of data</param>
-        /// <param name="validResult">Valid result for each data in the batch</param>
-        /// <param name="epochs">Number of iterations. How many times batch will be passed through network</param>
-        void Train(double[,] batch, double[,] validResult, int epochs);
-
-        /// <summary>
-        /// Start the training process of the network.
-        /// </summary>
-        /// <param name="batch">Batch of data</param>
-        /// <param name="validResult">Valid result for each data in the batch</param>
-        /// <param name="epochs">Number of iterations. How many times batch will be passed through network</param>
-        void Train(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs);
-
-        void _Train(double[] input, double[] validPrediction);
-
-        /// <summary>
         /// This method will connect the layers and will create weighs between neurons.
         /// </summary>
         void Build();
-
-        /// <summary>
-        /// Save the current model.
-        /// </summary>
-        /// <param name="filePath">Path to the favorite destination to save model. The file should 
-        /// be a *.nn extension to work.
-        /// </param>
-        void Save(string filePath);
 
         /// <summary>
         /// Parse an existing network.
