@@ -102,7 +102,7 @@ namespace FinalNeuralNetwork.Models
         {
             if (!CheckIfIsReadyForBuild())
                 throw new NotReadyForBuildException("Failed to build network. One or more layers are null");
-
+            _weights[0] = Array.Empty<double[]>();
             for(int i = 1;i< _layers.Length; i++)
             {
                 var currentLayer = _layers[i];

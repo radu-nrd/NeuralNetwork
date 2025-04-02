@@ -13,7 +13,7 @@ namespace FinalNeuralNetwork.Interfaces
     /// <summary>
     /// Base Interface of a Neural Network Model
     /// </summary>
-    public interface INeuralNetwork : ITrainable,IPredictable,ISaveable
+    public interface INeuralNetwork : ITrainable,ITrainableGPU,IPredictable,ISaveable
     {
         /// <summary>
         /// Impact of learning in training process.
