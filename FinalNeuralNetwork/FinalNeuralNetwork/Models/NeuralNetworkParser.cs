@@ -56,7 +56,7 @@ namespace FinalNeuralNetwork.Models
 
         private static void BuildWeightsFromJson(JObject jsonObj, ref NeuralNetwork model)
         {
-            model._weights[0] = Array.Empty<double[]>();
+            //model._weights[0] = [Enumerable.Repeat(double.NaN, model._layers[0].Length).ToArray()];
             var weights = jsonObj["Weights"]!.Values();
             foreach(var weightSet in weights)
             {

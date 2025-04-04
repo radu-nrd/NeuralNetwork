@@ -34,6 +34,7 @@ double[][] outcome =
                 [0.9],
                 [0.1],
 ];
+//nn.Train(batch, outcome,10);
 nn.TrainGPU(batch, outcome, 10);
 
 

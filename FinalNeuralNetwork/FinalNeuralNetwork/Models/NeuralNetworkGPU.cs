@@ -54,17 +54,19 @@ namespace FinalNeuralNetwork.Models
                 ValidPredictions = BuildFlatArrayFrom2D(validResult),
                 ValidPredictionOffsets = BuildOffsetForArray2D(validResult),
                 Layers = BuildFlatArrayFrom2D(_layers),
-                LayerOffsets = BuildOffsetForArray2D(_layers),
+                LayersCount = _layers.Select(l=>l.Length).ToArray(),
                 Weights = BuildFlatArrayFrom3D(_weights),
                 ActivationFunctions = [],
-                ForwardData = []
+                ForwardData = new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length],
+                Input = new double[_layers.Select(l => l.Length).ToArray().Max()],
+                Gradient = new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length]
             };
         }
 
         private T[] BuildFlatArrayFrom3D<T>(T[][][] array)
         {
             List<T> result = new List<T>();
-            for (int i = 0; i < array.Length; i++) //weights all
+            for (int i = 1; i < array.Length; i++) //weights all
                 for (int j = 0; j < array[i].Length; j++) //layer weights
                     for (int k = 0; k < array[i][j].Length; k++)
                         result.Add(array[i][j][k]);
@@ -116,16 +118,71 @@ namespace FinalNeuralNetwork.Models
         }
         private void _TestKernel(int idx,Neural_Network_GPU_Setup setup)
         {
-            var batchStartIndex = setup.BatchOffsets[idx];
-            var batchStartEnd = setup.BatchOffsets[idx + 1];
+            #region Indexes
+            var forwardDataIndex = 0;
+            var batchDataStartIndex = setup.BatchOffsets[idx];
+            var batchDataEndIndex = setup.BatchOffsets[idx + 1];
+            var inputIndex = 0;
+            var neuronStartIndex = setup.LayersCount[0];
+            var weightStartIndex = 0;
+            var validPredictionStartIndex = setup.ValidPredictionOffsets[idx];
+            var validPredictionEndIndex = setup.ValidPredictionOffsets[idx + 1];
+            var gradientIndex = setup.ForwardData.Length-1;
+            #endregion
 
-            for(int i = 1; i < setup.Layers.Length; i++)
+            #region CopyBatchDataToInput
+            for (int i = batchDataStartIndex; i < batchDataEndIndex; i++)
             {
-                for(int j = setup.LayerOffsets[i]; j < setup.LayerOffsets[i+1]; j++) // neurons
-                {
-
-                }
+                setup.Input[inputIndex] = setup.Batch[i];
+                inputIndex++;
             }
+            #endregion
+
+            #region Forward Propagation Algorithm
+            for (int i = 1; i < setup.LayersCount.Length; i++) //layers
+            {
+                var prevLayerCount = setup.LayersCount[i - 1];
+                var neuronEndIndex = neuronStartIndex + setup.LayersCount[i];
+                var saveStartForwardingIndex = forwardDataIndex;
+                for(int j = neuronStartIndex; j < neuronEndIndex; j++)
+                {
+                    var weightEndIndex = weightStartIndex + prevLayerCount;
+                    setup.ForwardData[forwardDataIndex] = setup.Layers[j];
+                    inputIndex = 0;
+
+                    for(int k = weightStartIndex; k < weightEndIndex; k++)
+                    {
+                        setup.ForwardData[forwardDataIndex] += setup.Weights[k] * setup.Input[inputIndex];
+                        inputIndex++;
+                    }
+                    setup.ForwardData[forwardDataIndex] = Sigmoid(setup.ForwardData[forwardDataIndex]);
+                    forwardDataIndex++;
+                    weightStartIndex = weightEndIndex;
+                }
+
+                for(int k = 0;k < neuronEndIndex - neuronStartIndex; k++)
+                {
+                    setup.Input[k] = setup.ForwardData[saveStartForwardingIndex];
+                    saveStartForwardingIndex++;
+                }
+
+                neuronStartIndex = neuronEndIndex;
+            }
+            #endregion
+
+            #region Backpropagation Algorithm
+            #region CalculateOutputGradient
+            var networkPredictionStartIndex = setup.ForwardData.Length - setup.LayersCount[setup.LayersCount.Length - 1];
+
+            for(int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
+            {
+                setup.Gradient[gradientIndex] = setup.ValidPredictions[i] - setup.ForwardData[networkPredictionStartIndex + i];
+                setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[networkPredictionStartIndex + i]);
+                gradientIndex--;
+            }
+
+            #endregion
+            #endregion
         }
 
         public void TrainGPU(double[,] batch, double[,] validResult, int epochs)

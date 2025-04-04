@@ -32,7 +32,7 @@ namespace FinalNeuralNetwork.Utils
             {
                 for (int j = layerOffsets[i]; j < layerOffsets[i + 1]; j++)
                 {
-                    //TODO build setup , too hard to understand rn
+                    
                 }
             }
 

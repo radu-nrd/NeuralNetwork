@@ -14,10 +14,12 @@ namespace FinalNeuralNetwork.Models
         public required double[] ValidPredictions { get; set; }
         public required int[] ValidPredictionOffsets {  get; set; }
         public required double[] Layers {  get; set; }
-        public required int[] LayerOffsets { get; set; }
+        public required int[] LayersCount { get; set; }
         public required double[] Weights { get; set; }
         public required int[] ActivationFunctions {  get; set; }
         public required double[] ForwardData {  get; set; }
+        public required double[] Input {  get; set; } 
+        public required double[] Gradient{  get; set; }
 
     }
 }
