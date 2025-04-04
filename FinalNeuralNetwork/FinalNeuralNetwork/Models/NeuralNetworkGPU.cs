@@ -171,7 +171,8 @@ namespace FinalNeuralNetwork.Models
             #endregion
 
             #region Backpropagation Algorithm
-            #region CalculateOutputGradient
+
+            #region Calculate Output Gradient
             var networkPredictionStartIndex = setup.ForwardData.Length - setup.LayersCount[setup.LayersCount.Length - 1];
 
             for(int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
@@ -182,6 +183,35 @@ namespace FinalNeuralNetwork.Models
             }
 
             #endregion
+
+            #region Calculate Hidden Gradient
+            neuronStartIndex = setup.Layers.Length - setup.LayersCount[setup.LayersCount.Length - 1] - 1;
+            weightStartIndex = setup.Weights.Length - 1;
+
+            var backwardDataIndex = setup.Gradient.Length - 1;
+            for(int i = setup.LayersCount.Length - 2; i > 0; i--)
+            {
+                var prevLayerCount = setup.LayersCount[i + 1];
+                var neuronEndIndex = neuronStartIndex - setup.LayersCount[i];
+                var saveStartBackwardingIndex = backwardDataIndex;
+
+                for(int j = neuronStartIndex; j > neuronEndIndex; j--)
+                {
+                    backwardDataIndex = saveStartBackwardingIndex;
+                    var weightEndIndex = weightStartIndex - prevLayerCount;
+                    for(int k = weightStartIndex; k > weightEndIndex; k--)
+                    {
+                        setup.Gradient[gradientIndex] = setup.Gradient[backwardDataIndex] * setup.Weights[k]; //input
+                        var derivative = SigmoidDerivative(setup.ForwardData[j-2]);
+                        setup.Gradient[gradientIndex] *= derivative;
+                        backwardDataIndex--;
+                    }
+                    gradientIndex--;
+                    weightStartIndex = weightEndIndex;
+                }
+            }
+            #endregion
+
             #endregion
         }
 
