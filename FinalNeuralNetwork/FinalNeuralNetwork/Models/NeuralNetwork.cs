@@ -205,7 +205,7 @@ namespace FinalNeuralNetwork.Models
         {
             var outputError = CalculateOutputError(networkPrediction, validPrediction);
             lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
-            UpdateBiases(_layers.Length - 1, lastGradient);
+            //UpdateBiases(_layers.Length - 1, lastGradient);
 
         }
         private void UpdateBiases(int layerIdx, double[] gradient)

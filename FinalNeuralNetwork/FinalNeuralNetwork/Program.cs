@@ -38,11 +38,6 @@ double[][] outcome =
 nn.TrainGPU(batch, outcome, 10);
 
 
-
-
-
-
-
 //var watch = new System.Diagnostics.Stopwatch();
 //watch.Start();
 //nn.Train(batch, outcome, 100000);
