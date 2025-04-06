@@ -26,7 +26,7 @@ namespace FinalNeuralNetwork.Utils
             ArrayView1D<double, Stride1D.Dense> forwardData,
             ArrayView1D<double, Stride1D.Dense> input,
             ArrayView1D<double, Stride1D.Dense> gradient,
-            ArrayView2D<double,Stride2D.DenseX> gradientSave
+            int numberOfThreads
         )
         {
 
@@ -34,15 +34,17 @@ namespace FinalNeuralNetwork.Utils
                 return;
 
             #region Indexes
-            var forwardDataIndex = 0;
+            var forwardDataIndex = idx * (forwardData.Length / numberOfThreads);
             var batchDataStartIndex = batchOffsets[idx];
-            var batchDataEndIndex = batchOffsets[idx + 1];
-            var inputIndex = 0;
+            var batchDataEndIndex = idx == numberOfThreads - 1 ? batch.Length : batchOffsets[idx + 1];
+            var inputIndex = idx * (input.Length / numberOfThreads);
             var neuronStartIndex = layersCount[0];
             var weightStartIndex = 0;
             var validPredictionStartIndex = validPredictionOffsets[idx];
-            var validPredictionEndIndex = validPredictionOffsets[idx + 1];
-            var gradientIndex = forwardData.Length - 1;
+            var validPredictionEndIndex = idx == numberOfThreads - 1 ? validPredictions.Length : validPredictionOffsets[idx + 1];
+            var gradientLength = gradient.Length / numberOfThreads;
+            var forwardLength = forwardData.Length / numberOfThreads;
+            var gradientIndex = (idx * gradientLength) + gradientLength - 1; //starts at the end  
             #endregion
 
             #region CopyBatchDataToInput
@@ -63,7 +65,7 @@ namespace FinalNeuralNetwork.Utils
                 {
                     var weightEndIndex = weightStartIndex + prevLayerCount;
                     forwardData[forwardDataIndex] = layers[j];
-                    inputIndex = 0;
+                    inputIndex = idx * (input.Length / numberOfThreads);
 
                     for (int k = weightStartIndex; k < weightEndIndex; k++)
                     {
@@ -74,11 +76,12 @@ namespace FinalNeuralNetwork.Utils
                     forwardDataIndex++;
                     weightStartIndex = weightEndIndex;
                 }
-
+                inputIndex = idx * (input.Length / numberOfThreads);
                 for (int k = 0; k < neuronEndIndex - neuronStartIndex; k++)
                 {
-                    input[k] = forwardData[saveStartForwardingIndex];
+                    input[inputIndex] = forwardData[saveStartForwardingIndex];
                     saveStartForwardingIndex++;
+                    inputIndex++;
                 }
 
                 neuronStartIndex = neuronEndIndex;
@@ -88,7 +91,7 @@ namespace FinalNeuralNetwork.Utils
             #region Backpropagation Algorithm
 
             #region Calculate Output Gradient
-            var networkPredictionStartIndex = forwardData.Length - layersCount[layersCount.Length - 1];
+            var networkPredictionStartIndex = idx * forwardLength + (forwardLength - layersCount[layersCount.Length - 1]);
             var outputBackwardIndex = 0;
             for (int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
@@ -104,7 +107,7 @@ namespace FinalNeuralNetwork.Utils
             neuronStartIndex = layers.IntLength - layersCount[layersCount.Length - 1] - 1;
             weightStartIndex = weights.IntLength - 1;
 
-            var backwardDataIndex = gradient.IntLength - 1;
+            var backwardDataIndex = (idx * gradientLength) + gradientLength - 1;
             for (int i = layersCount.IntLength - 2; i > 0; i--)
             {
                 var prevLayerCount = layersCount[i + 1];
@@ -129,11 +132,12 @@ namespace FinalNeuralNetwork.Utils
 
             #endregion
 
-            #region Save Gradient Build
-            gradientSave[idx, 0] = gradient[3];
-            //for (int i = 0; i < gradient.IntLength; i++)
-            //    gradientSave[idx.X, i] = gradient[i];
-            #endregion
+            //#region Save Gradient Build
+            //gradientSave[idx, 0] = gradient[idx * gradientLenght + gradientLenght-1];
+            ////gradientSave[idx, 0] = 4;
+            ////for (int i = 0; i < gradient.IntLength; i++)
+            ////    gradientSave[idx.X, i] = gradient[i];
+            //#endregion
         }
     }
 }

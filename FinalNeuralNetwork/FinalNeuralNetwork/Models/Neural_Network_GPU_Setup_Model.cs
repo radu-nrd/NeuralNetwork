@@ -22,7 +22,7 @@ namespace FinalNeuralNetwork.Models
         public required double[] ForwardData {  get; set; }
         public required double[] Input {  get; set; } 
         public required double[] Gradient{  get; set; }
-
+        public required int NumberOfThreads {  get; set; }
     }
 
     public class NeuralNetworkGpuSetup
@@ -38,6 +38,7 @@ namespace FinalNeuralNetwork.Models
         public required MemoryBuffer1D<double, Stride1D.Dense> ForwardDataBuffer { get; set; }
         public required MemoryBuffer1D<double, Stride1D.Dense> InputBuffer {  get; set; }
         public required MemoryBuffer1D<double, Stride1D.Dense> GradientBuffer {  get; set; }
+        public required int NumberOfThreads { get; set; }
 
     }
 }

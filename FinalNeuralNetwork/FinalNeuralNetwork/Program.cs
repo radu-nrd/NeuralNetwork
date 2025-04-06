@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FinalNeuralNetwork.Interfaces;
 using System;
+using System.Diagnostics;
 
 Console.WriteLine("Hello, World!");
 
@@ -19,23 +20,42 @@ Console.WriteLine("Hello, World!");
 var nn = INeuralNetwork.Load("new_test_with_XOR.nn");
 nn.LearningRate = 0.1;
 
-double[][] batch =
-[
-                [0.1,0.1],
-                [0.1,0.9],
-                [0.9,0.1],
-                [0.9,0.9]
-];
+//double[][] batch =
+//[
+//                [0.1,0.1],
+//                [0.1,0.9],
+//                [0.9,0.1],
+//                [0.9,0.9],
+//];
 
-double[][] outcome =
-[
-                [0.1],
-                [0.9],
-                [0.9],
-                [0.1],
-];
-//nn.Train(batch, outcome,10);
-nn.TrainGPU(batch, outcome, 10);
+//double[][] outcome =
+//[
+//                [0.1],
+//                [0.9],
+//                [0.9],
+//                [0.1],
+//];
+
+var rand = new Random();
+var batch = new double[100_000_000][];
+var outcome = new double[100_000_000][];
+
+for (int i = 0; i < batch.Length; i++)
+{
+    batch[i] = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
+    outcome[i] = [rand.NextDouble()];
+}
+    
+
+var watch = Stopwatch.StartNew();
+//nn.Train(batch, outcome, 10000);
+Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
+watch.Stop();
+Console.ReadKey();
+nn.TrainGPU(batch, outcome, 1000);
+Console.ReadKey();
+
+
 
 
 //var watch = new System.Diagnostics.Stopwatch();

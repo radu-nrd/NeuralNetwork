@@ -4,6 +4,7 @@ using ILGPU.Runtime;
 using ILGPU.Runtime.OpenCL;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace FinalNeuralNetwork.Models
             ArrayView1D<double,Stride1D.Dense>,
             ArrayView1D<double, Stride1D.Dense>,
             ArrayView1D<double, Stride1D.Dense>,
-            ArrayView2D<double,Stride2D.DenseX>
+            int
             >? _trainKernel;
         private void GPUSetup()
         {
@@ -47,11 +48,11 @@ namespace FinalNeuralNetwork.Models
             ArrayView1D<double, Stride1D.Dense>,
             ArrayView1D<double, Stride1D.Dense>,
             ArrayView1D<double, Stride1D.Dense>,
-            ArrayView2D<double, Stride2D.DenseX>
+            int
             > (GPU_KERNEL._Train);
         }
 
-        private __OLD__Neural_Network_GPU_Setup _Old_BuildGpuModel(double[][] batch, double[][] validResult)
+        private __OLD__Neural_Network_GPU_Setup _Old_BuildGpuModel(double[][] batch, double[][] validResult,int numberOfThreads)
         {
             return new __OLD__Neural_Network_GPU_Setup
             {
@@ -63,12 +64,13 @@ namespace FinalNeuralNetwork.Models
                 LayersCount = _layers.Select(l => l.Length).ToArray(),
                 Weights = BuildFlatArrayFrom3D(_weights),
                 ActivationFunctions = [],
-                ForwardData = new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length],
-                Input = new double[_layers.Select(l => l.Length).ToArray().Max()],
-                Gradient = new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length]
+                ForwardData = new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)],
+                Input = new double[numberOfThreads * _layers.Select(l => l.Length).ToArray().Max()],
+                Gradient = new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)],
+                NumberOfThreads = numberOfThreads
             };
         }
-        private NeuralNetworkGpuSetup BuildGpuModel(double[][] batch, double[][] validResult)
+        private NeuralNetworkGpuSetup BuildGpuModel(double[][] batch, double[][] validResult,int numberOfThreads)
         {
             GPUSetup();
             return new NeuralNetworkGpuSetup
@@ -81,9 +83,10 @@ namespace FinalNeuralNetwork.Models
                 LayersCountBuffer = _graphicsAccelerator!.Allocate1D(_layers.Select(l => l.Length).ToArray()),
                 WeightsBuffer = _graphicsAccelerator!.Allocate1D(BuildFlatArrayFrom3D(_weights)),
                 ActivationFunctionsBuffer = _graphicsAccelerator!.Allocate1D([0]),
-                ForwardDataBuffer = _graphicsAccelerator!.Allocate1D(new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length]),
-                InputBuffer = _graphicsAccelerator!.Allocate1D(new double[_layers.Select(l => l.Length).ToArray().Max()]),
-                GradientBuffer = _graphicsAccelerator!.Allocate1D(new double[_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length])
+                ForwardDataBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
+                InputBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * _layers.Select(l => l.Length).ToArray().Max()]),
+                GradientBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
+                NumberOfThreads = numberOfThreads
             };
         }
 
@@ -116,7 +119,7 @@ namespace FinalNeuralNetwork.Models
         }
         private int[] BuildOffsetForArray2D<T>(T[][] array)
         {
-            int[] offsets = new int[array.Length];
+            int[] offsets = new int[array.Length+1];
             offsets[0] = 0;
             for(int  i = 1; i < array.Length; i++)
                 offsets[i] = offsets[i - 1] + array[i - 1].Length;
@@ -134,24 +137,16 @@ namespace FinalNeuralNetwork.Models
 
         public void TrainGPU(double[][] batch, double[][] validResult, int epochs)
         {
-            var model = BuildGpuModel(batch, validResult);
-            var index2d = new LongIndex2D(batch.Length, model.GradientBuffer.Length);
+            var runThreads = batch.Length;
 
-            Stride2D.GetLeadingDimensionSize getLeading = (LongIndex2D ext) => ext.Y;
-            var buildStride = new Stride2D.BuildStride<Stride2D.DenseX>((LongIndex2D ext, int leading) =>
-                    new Stride2D.DenseX(leading)
-            );
-
-            var gradientSavebuffer = _graphicsAccelerator!.Allocate2D<double,Stride2D.DenseX>
+            var model = BuildGpuModel(batch, validResult,runThreads);
+            var watch = Stopwatch.StartNew();
+            for(int e = 0; e < epochs; e++)
+            {
+                Console.WriteLine($"Epoch: {e+1}/{epochs}");
+                _trainKernel!
                 (
-                    index2d,
-                    getLeading,
-                    buildStride
-                );
-
-            _trainKernel!
-                (
-                    6,
+                    runThreads,
                     model.BatchBuffer.View,
                     model.BatchOffsetsBuffer.View,
                     model.ValidPredictionsBuffer.View,
@@ -163,27 +158,33 @@ namespace FinalNeuralNetwork.Models
                     model.ForwardDataBuffer.View,
                     model.InputBuffer.View,
                     model.GradientBuffer.View,
-                    gradientSavebuffer.View
+                    runThreads
                 );
-            _graphicsAccelerator.Synchronize();
-            var gradientSave = gradientSavebuffer.GetAsArray2D();
-
-            //var modelCPU = _Old_BuildGpuModel(batch, validResult);
+                //_graphicsAccelerator!.Synchronize();
+                //var gradient = model.GradientBuffer.GetAsArray1D();
+            }
+            Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
+            watch.Stop();
+            //var runThreads = 4;
+            //var modelCPU = _Old_BuildGpuModel(batch, validResult,runThreads);
             //for (int i = 0; i < batch.Length; i++)
             //    _TestKernel(i, modelCPU);
         }
         private void _TestKernel(int idx,__OLD__Neural_Network_GPU_Setup setup)
         {
             #region Indexes
-            var forwardDataIndex = 0;
+            var forwardDataIndex = idx * (setup.ForwardData.Length/setup.NumberOfThreads);
             var batchDataStartIndex = setup.BatchOffsets[idx];
-            var batchDataEndIndex = setup.BatchOffsets[idx + 1];
-            var inputIndex = 0;
+            var batchDataEndIndex = idx == setup.NumberOfThreads-1? setup.Batch.Length : setup.BatchOffsets[idx + 1];
+            var inputIndex = idx * (setup.Input.Length / setup.NumberOfThreads);
             var neuronStartIndex = setup.LayersCount[0];
             var weightStartIndex = 0;
             var validPredictionStartIndex = setup.ValidPredictionOffsets[idx];
-            var validPredictionEndIndex = setup.ValidPredictionOffsets[idx + 1];
-            var gradientIndex = setup.ForwardData.Length-1;
+            var validPredictionEndIndex = idx == setup.NumberOfThreads-1? setup.ValidPredictions.Length : setup.ValidPredictionOffsets[idx + 1];
+            //var gradientIndex = setup.ForwardData.Length-1;
+            var gradientLenght = setup.Gradient.Length / setup.NumberOfThreads;
+            var forwardLenght = setup.ForwardData.Length / setup.NumberOfThreads;
+            var gradientIndex = (idx * gradientLenght) + gradientLenght - 1; //starts at the end  
             #endregion
 
             #region CopyBatchDataToInput
@@ -204,7 +205,7 @@ namespace FinalNeuralNetwork.Models
                 {
                     var weightEndIndex = weightStartIndex + prevLayerCount;
                     setup.ForwardData[forwardDataIndex] = setup.Layers[j];
-                    inputIndex = 0;
+                    inputIndex = idx * (setup.Input.Length / setup.NumberOfThreads);
 
                     for(int k = weightStartIndex; k < weightEndIndex; k++)
                     {
@@ -215,11 +216,12 @@ namespace FinalNeuralNetwork.Models
                     forwardDataIndex++;
                     weightStartIndex = weightEndIndex;
                 }
-
-                for(int k = 0;k < neuronEndIndex - neuronStartIndex; k++)
+                inputIndex = idx * (setup.Input.Length / setup.NumberOfThreads);
+                for (int k = 0;k < neuronEndIndex - neuronStartIndex; k++)
                 {
-                    setup.Input[k] = setup.ForwardData[saveStartForwardingIndex];
+                    setup.Input[inputIndex] = setup.ForwardData[saveStartForwardingIndex];
                     saveStartForwardingIndex++;
+                    inputIndex++;
                 }
 
                 neuronStartIndex = neuronEndIndex;
@@ -229,7 +231,7 @@ namespace FinalNeuralNetwork.Models
             #region Backpropagation Algorithm
 
             #region Calculate Output Gradient
-            var networkPredictionStartIndex = setup.ForwardData.Length - setup.LayersCount[setup.LayersCount.Length - 1];
+            var networkPredictionStartIndex = idx * forwardLenght + (forwardLenght - setup.LayersCount[setup.LayersCount.Length - 1]);
             var outputBackwardIndex = 0;
             for(int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
@@ -245,7 +247,8 @@ namespace FinalNeuralNetwork.Models
             neuronStartIndex = setup.Layers.Length - setup.LayersCount[setup.LayersCount.Length - 1] - 1;
             weightStartIndex = setup.Weights.Length - 1;
 
-            var backwardDataIndex = setup.Gradient.Length - 1;
+            //var backwardDataIndex = setup.Gradient.Length - 1;
+            var backwardDataIndex = (idx * gradientLenght) + gradientLenght - 1;
             for(int i = setup.LayersCount.Length - 2; i > 0; i--)
             {
                 var prevLayerCount = setup.LayersCount[i + 1];
@@ -259,7 +262,7 @@ namespace FinalNeuralNetwork.Models
                     for(int k = weightStartIndex; k > weightEndIndex; k--)
                     {
                         setup.Gradient[gradientIndex] = setup.Gradient[backwardDataIndex] * setup.Weights[k]; //input
-                        setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[j - 2]); ;
+                        setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[(idx * forwardLenght) + j - 2]);
                         backwardDataIndex--;
                     }
                     gradientIndex--;
