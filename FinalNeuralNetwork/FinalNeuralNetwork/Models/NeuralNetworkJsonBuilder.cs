@@ -27,9 +27,6 @@ namespace FinalNeuralNetwork.Models
 
                 jsonWriter.WriteStartObject();
 
-                jsonWriter.WritePropertyName("LearningRate");
-                jsonWriter.WriteValue(model.LearningRate);
-
                 jsonWriter.WritePropertyName("Error");
                 jsonWriter.WriteValue(model.Error);
 

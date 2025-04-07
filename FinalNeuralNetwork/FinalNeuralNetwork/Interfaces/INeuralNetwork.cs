@@ -15,10 +15,6 @@ namespace FinalNeuralNetwork.Interfaces
     /// </summary>
     public interface INeuralNetwork : ITrainable,ITrainableGPU,IPredictable,ISaveable
     {
-        /// <summary>
-        /// Impact of learning in training process.
-        /// </summary>
-        double LearningRate { get; set; }
 
         /// <summary>
         /// Error of network for specific data after train.

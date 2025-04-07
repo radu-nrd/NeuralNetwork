@@ -25,7 +25,6 @@ namespace FinalNeuralNetwork.Models
         private static void BuildModel(JObject jsonObj, out NeuralNetwork model)
         {
             model = new NeuralNetwork(Convert.ToInt32(jsonObj["Layer_Count"]));
-            model.LearningRate = Convert.ToDouble(jsonObj["LearningRate"]);
             model._error = Convert.ToDouble(jsonObj["error"]);
 
             BuildLayersFromJson(jsonObj, ref model);

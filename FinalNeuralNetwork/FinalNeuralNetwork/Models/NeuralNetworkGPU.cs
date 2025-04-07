@@ -135,7 +135,7 @@ namespace FinalNeuralNetwork.Models
             return rez;
         }
 
-        public void TrainGPU(double[][] batch, double[][] validResult, int epochs)
+        public void TrainGPU(double[][] batch, double[][] validResult, int epochs, double learningRate = 0.1)
         {
             var runThreads = batch.Length;
 
@@ -274,12 +274,12 @@ namespace FinalNeuralNetwork.Models
             #endregion
         }
 
-        public void TrainGPU(double[,] batch, double[,] validResult, int epochs)
+        public void TrainGPU(double[,] batch, double[,] validResult, int epochs, double learningRate = 0.1)
         {
             throw new NotImplementedException();
         }
 
-        public void TrainGPU(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs)
+        public void TrainGPU(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs, double learningRate = 0.1)
         {
             throw new NotImplementedException();
         }

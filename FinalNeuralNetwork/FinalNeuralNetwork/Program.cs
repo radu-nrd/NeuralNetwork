@@ -3,75 +3,73 @@ using FinalNeuralNetwork.Interfaces;
 using System;
 using System.Diagnostics;
 
-Console.WriteLine("Hello, World!");
 
-//var nn = INeuralNetwork.CreateNetwork(3);
-//var inputLayer = new double[2];
-//var hiddenLayer = new double[] { 0.1, 0.3, 0.8 };
-//var outputLayer = new double[] { 0.2 };
+double[][] batch =
+[
+                [0.1,0.1],
+                [0.1,0.9],
+                [0.9,0.1],
+                [0.9,0.9],
+];
 
-//nn.AppendLayer(inputLayer);
-//nn.AppendLayer(3);
-//nn.AppendLayer(1);
+double[][] outcome =
+[
+                [0.0,0.0,1.0],
+                [1.0,0.0,0.0],
+                [1.0,0.0,0.0],
+                [0.0,0.0,1.0],
+];
 
-//nn.Build();
-//nn.Save("new_test_with_XOR.nn");
 
-var nn = INeuralNetwork.Load("new_test_with_XOR.nn");
-nn.LearningRate = 0.1;
+var nn = INeuralNetwork.CreateNetwork(3);
+var inputLayer = new double[2];
+var hiddenLayer = new double[] { 0.1, 0.3, 0.8 };
+var outputLayer = new double[] { 0.2 };
 
-//double[][] batch =
-//[
-//                [0.1,0.1],
-//                [0.1,0.9],
-//                [0.9,0.1],
-//                [0.9,0.9],
-//];
+nn.AppendLayer(inputLayer);
+nn.AppendLayer(8,FinalNeuralNetwork.Utils.ActivationFunction.Relu);
+nn.AppendLayer(3,FinalNeuralNetwork.Utils.ActivationFunction.Softmax);
 
-//double[][] outcome =
-//[
-//                [0.1],
-//                [0.9],
-//                [0.9],
-//                [0.1],
-//];
-
-var rand = new Random();
-var batch = new double[100_000_000][];
-var outcome = new double[100_000_000][];
-
-for (int i = 0; i < batch.Length; i++)
-{
-    batch[i] = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
-    outcome[i] = [rand.NextDouble()];
-}
-    
-
-var watch = Stopwatch.StartNew();
-//nn.Train(batch, outcome, 10000);
-Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
-watch.Stop();
-Console.ReadKey();
-nn.TrainGPU(batch, outcome, 1000);
-Console.ReadKey();
+nn.Build();
+nn.Train(batch, outcome,10000000);
+var test1 = nn.Predict([0.1, 0.9]);
+nn.Save("new_network_after_GPU_Paralelization.nn");
 
 
 
 
-//var watch = new System.Diagnostics.Stopwatch();
-//watch.Start();
-//nn.Train(batch, outcome, 100000);
-//watch.Stop();
-//Console.WriteLine();
-//Console.WriteLine($"Done CPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
-//Console.WriteLine();
+//var nn = INeuralNetwork.Load("new_test_with_XOR.nn");
+//nn.LearningRate = 0.1;
 
-//double[] result = [
-//    nn.Predict([0.1,0.1]).ElementAt(0),
-//     nn.Predict([0.9,0.1]).ElementAt(0),
-//      nn.Predict([0.1,0.9]).ElementAt(0),
-//       nn.Predict([0.9,0.9]).ElementAt(0),
-//    ];
+
 
 Console.WriteLine("Done");
+
+
+
+
+
+
+
+
+
+
+//var rand = new Random();
+//var batch = new double[100_000_000][];
+//var outcome = new double[100_000_000][];
+
+//for (int i = 0; i < batch.Length; i++)
+//{
+//    batch[i] = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
+//    outcome[i] = [rand.NextDouble()];
+//}
+
+
+//var watch = Stopwatch.StartNew();
+////nn.Train(batch, outcome, 10000);
+//Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
+//watch.Stop();
+//Console.ReadKey();
+//nn.TrainGPU(batch, outcome, 1000);
+//Console.ReadKey();
 
