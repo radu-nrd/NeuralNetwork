@@ -200,10 +200,10 @@ namespace FinalNeuralNetwork.Models
         }
         private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient,double learningRate)
         {
-            //var outputError = CalculateOutputError(networkPrediction, validPrediction);
-            var outputError = CalculateOutputErrorSOFTMAX(networkPrediction, validPrediction);
-            lastGradient = outputError;
-            //lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
+            var outputError = CalculateOutputError(networkPrediction, validPrediction);
+            //var outputError = CalculateOutputErrorSOFTMAX(networkPrediction, validPrediction);
+            //lastGradient = outputError;
+            lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
             UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
 
         }
@@ -241,19 +241,19 @@ namespace FinalNeuralNetwork.Models
             var layer = _layers[layerIdx];
             var result = new double[layer.Length];
 
-            for(int j = 0; j < layerWeights.Length; j++)
+
+            for (int n = 0; n < layer.Length; n++)
             {
-                var nWeights = layerWeights[j];
-                for(int n = 0; n < layer.Length; n++)
-                {
-                    var nRez = 0.0;
-                    for (int i = 0; i < input.Length; i++)
-                        nRez += input[i] * nWeights[n];
-                    result[n] = nRez;
-                }
+                var nRez = 0.0;
+                for (int i = 0; i < input.Length; i++)
+                    nRez += input[i] * layerWeights[i][n]; //BUG
+                result[n] = nRez;
             }
+
             return result;
         }
+
+
         private Dictionary<int, double[]> GetDataFromForward(double[] input)
         {
             var _tmpForwardSave = new Dictionary<int, double[]>();

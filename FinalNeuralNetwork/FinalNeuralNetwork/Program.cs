@@ -4,45 +4,67 @@ using System;
 using System.Diagnostics;
 
 
+//double[][] batch =
+//[
+//                [0.1,0.1],
+//                [0.1,0.9],
+//                [0.9,0.1],
+//                [0.9,0.9],
+//];
+
+//double[][] outcome =
+//[
+//                //[0.0,1.0],
+//                //[1.0,0.0],
+//                //[1.0,0.0],
+//                //[0.0,1.0],
+//                [0.1],
+//                [0.9],
+//                [0.9],
+//                [0.1]
+//];
+
 double[][] batch =
-[
-                [0.1,0.1],
-                [0.1,0.9],
-                [0.9,0.1],
-                [0.9,0.9],
-];
+{
+    new double[] { 0.1, 0.1 }, // Clasa 0
+    new double[] { 0.1, 1.0 }, // Clasa 1
+    new double[] { 0.9, 0.1 }, // Clasa 2
+    new double[] { 0.9, 0.9 }, // Clasa 0
+    new double[] { 0.5, 0.9 }, // Clasa 1
+    new double[] { 0.9, 0.5 }, // Clasa 2
+};
 
 double[][] outcome =
-[
-                [0.0,0.0,1.0],
-                [1.0,0.0,0.0],
-                [1.0,0.0,0.0],
-                [0.0,0.0,1.0],
-];
+{
+    new double[] { 0.9, 0.1,}, // Clasa 0
+    new double[] { 0.1, 0.9,}, // Clasa 1
+    new double[] { 0.1, 0.1,}, // Clasa 2
+    new double[] { 0.9, 0.1,}, // Clasa 0
+    new double[] { 0.1, 0.9,}, // Clasa 1
+    new double[] { 0.1, 0.1,}, // Clasa 2
+};
 
 
 var nn = INeuralNetwork.CreateNetwork(3);
 var inputLayer = new double[2];
-var hiddenLayer = new double[] { 0.1, 0.3, 0.8 };
-var outputLayer = new double[] { 0.2 };
 
 nn.AppendLayer(inputLayer);
-nn.AppendLayer(8,FinalNeuralNetwork.Utils.ActivationFunction.Relu);
-nn.AppendLayer(3,FinalNeuralNetwork.Utils.ActivationFunction.Softmax);
+//nn.AppendLayer(3);
+//nn.AppendLayer(1);
+nn.AppendLayer(3);
+nn.AppendLayer(2,FinalNeuralNetwork.Utils.ActivationFunction.Softmax);
 
 nn.Build();
-nn.Train(batch, outcome,10000000);
-var test1 = nn.Predict([0.1, 0.9]);
-nn.Save("new_network_after_GPU_Paralelization.nn");
+//nn.Train(batch, outcome,10000);
+//var test1 = nn.Predict([0.1, 0.9]);
+//nn.Save("new_network_after_GPU_Paralelization.nn");
 
 
 
 
-//var nn = INeuralNetwork.Load("new_test_with_XOR.nn");
-//nn.LearningRate = 0.1;
-
-
-
+//var nn = INeuralNetwork.Load("new_network_after_GPU_Paralelization.nn");
+nn.Train(batch, outcome, 1000000);
+var da = nn.Predict([0.5, 0.9]);
 Console.WriteLine("Done");
 
 
