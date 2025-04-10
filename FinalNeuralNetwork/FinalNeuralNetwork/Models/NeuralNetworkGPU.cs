@@ -121,7 +121,7 @@ namespace FinalNeuralNetwork.Models
         {
             int[] offsets = new int[array.Length+1];
             offsets[0] = 0;
-            for(int  i = 1; i < array.Length; i++)
+            for(int  i = 1; i <= array.Length; i++)
                 offsets[i] = offsets[i - 1] + array[i - 1].Length;
             return offsets;
         }
@@ -139,36 +139,35 @@ namespace FinalNeuralNetwork.Models
         {
             var runThreads = batch.Length;
 
-            var model = BuildGpuModel(batch, validResult,runThreads);
-            var watch = Stopwatch.StartNew();
-            for(int e = 0; e < epochs; e++)
-            {
-                Console.WriteLine($"Epoch: {e+1}/{epochs}");
-                _trainKernel!
-                (
-                    runThreads,
-                    model.BatchBuffer.View,
-                    model.BatchOffsetsBuffer.View,
-                    model.ValidPredictionsBuffer.View,
-                    model.ValidPredictionsOffsetsBuffer.View,
-                    model.LayersBuffer.View,
-                    model.LayersCountBuffer.View,
-                    model.WeightsBuffer.View,
-                    model.ActivationFunctionsBuffer.View,
-                    model.ForwardDataBuffer.View,
-                    model.InputBuffer.View,
-                    model.GradientBuffer.View,
-                    runThreads
-                );
-                //_graphicsAccelerator!.Synchronize();
-                //var gradient = model.GradientBuffer.GetAsArray1D();
-            }
-            Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
-            watch.Stop();
-            //var runThreads = 4;
-            //var modelCPU = _Old_BuildGpuModel(batch, validResult,runThreads);
-            //for (int i = 0; i < batch.Length; i++)
-            //    _TestKernel(i, modelCPU);
+            //var model = BuildGpuModel(batch, validResult,runThreads);
+            //var watch = Stopwatch.StartNew();
+            //for(int e = 0; e < epochs; e++)
+            //{
+            //    Console.WriteLine($"Epoch: {e+1}/{epochs}");
+            //    _trainKernel!
+            //    (
+            //        runThreads,
+            //        model.BatchBuffer.View,
+            //        model.BatchOffsetsBuffer.View,
+            //        model.ValidPredictionsBuffer.View,
+            //        model.ValidPredictionsOffsetsBuffer.View,
+            //        model.LayersBuffer.View,
+            //        model.LayersCountBuffer.View,
+            //        model.WeightsBuffer.View,
+            //        model.ActivationFunctionsBuffer.View,
+            //        model.ForwardDataBuffer.View,
+            //        model.InputBuffer.View,
+            //        model.GradientBuffer.View,
+            //        runThreads
+            //    );
+            //    //_graphicsAccelerator!.Synchronize();
+            //    //var gradient = model.GradientBuffer.GetAsArray1D();
+            //}
+            //Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
+            //watch.Stop();
+            var modelCPU = _Old_BuildGpuModel(batch, validResult, runThreads);
+            for (int i = 0; i < batch.Length; i++)
+                _TestKernel(i, modelCPU);
         }
         private void _TestKernel(int idx,__OLD__Neural_Network_GPU_Setup setup)
         {
@@ -233,14 +232,16 @@ namespace FinalNeuralNetwork.Models
             #region Calculate Output Gradient
             var networkPredictionStartIndex = idx * forwardLenght + (forwardLenght - setup.LayersCount[setup.LayersCount.Length - 1]);
             var outputBackwardIndex = 0;
+
+            gradientIndex -= setup.LayersCount[setup.LayersCount.Length - 1] - 1;
             for(int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
                 setup.Gradient[gradientIndex] = setup.ValidPredictions[i] - setup.ForwardData[networkPredictionStartIndex + outputBackwardIndex];
                 setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[networkPredictionStartIndex + outputBackwardIndex]);
-                gradientIndex--;
+                gradientIndex++;
                 outputBackwardIndex++;
             }
-
+            gradientIndex -= setup.LayersCount[setup.LayersCount.Length - 1] + 1;
             #endregion
 
             #region Calculate Hidden Gradient
@@ -251,23 +252,26 @@ namespace FinalNeuralNetwork.Models
             var backwardDataIndex = (idx * gradientLenght) + gradientLenght - 1;
             for(int i = setup.LayersCount.Length - 2; i > 0; i--)
             {
-                var prevLayerCount = setup.LayersCount[i + 1];
                 var neuronEndIndex = neuronStartIndex - setup.LayersCount[i];
                 var saveStartBackwardingIndex = backwardDataIndex;
+                var tmpSaveWeightStart = weightStartIndex;
 
-                for(int j = neuronStartIndex; j > neuronEndIndex; j--)
+                for (int j = neuronStartIndex; j > neuronEndIndex; j--)
                 {
                     backwardDataIndex = saveStartBackwardingIndex;
-                    var weightEndIndex = weightStartIndex - prevLayerCount;
-                    for(int k = weightStartIndex; k > weightEndIndex; k--)
+                    var weightAccessorIndex = tmpSaveWeightStart;
+                    for(int k = 0;k< setup.LayersCount[i+1]; k++)
                     {
-                        setup.Gradient[gradientIndex] = setup.Gradient[backwardDataIndex] * setup.Weights[k]; //input
-                        setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[(idx * forwardLenght) + j - 2]);
+                        setup.Gradient[gradientIndex] += setup.Gradient[backwardDataIndex] * setup.Weights[weightAccessorIndex]; //input //BUBAAA
                         backwardDataIndex--;
+                        weightAccessorIndex -= setup.LayersCount[i];
                     }
+                    setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[(idx * forwardLenght) + j - 2]);
                     gradientIndex--;
-                    weightStartIndex = weightEndIndex;
+                    tmpSaveWeightStart--;
                 }
+                weightStartIndex -= setup.LayersCount[i+1] * setup.LayersCount[i];
+                neuronStartIndex -= setup.LayersCount[i];
             }
             #endregion
 

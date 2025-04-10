@@ -189,14 +189,14 @@ namespace FinalNeuralNetwork.Models
         }
         private void _TrainInputLayer(double[] gradient, double[] forwardData,double learningRate)
         {
-            UpdateWeights(0, gradient, forwardData, learningRate);
+            //UpdateWeights(0, gradient, forwardData, learningRate);
         }
         private void _TrainHiddenLayer(int layerIdx, double[] forwardData,ref double[] lastGradient,double learningRate)
         {
-            UpdateWeights(layerIdx, lastGradient, forwardData, learningRate);
+            //UpdateWeights(layerIdx, lastGradient, forwardData, learningRate);
             var backwardData = BackwardThroughNetwork(lastGradient, layerIdx);
             lastGradient = CalculateGradient(backwardData, forwardData, layerIdx);
-            UpdateBiases(layerIdx, lastGradient, learningRate);
+            //UpdateBiases(layerIdx, lastGradient, learningRate);
         }
         private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient,double learningRate)
         {
@@ -204,7 +204,7 @@ namespace FinalNeuralNetwork.Models
             //var outputError = CalculateOutputErrorSOFTMAX(networkPrediction, validPrediction);
             //lastGradient = outputError;
             lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
-            UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
+            //UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
 
         }
         private void UpdateBiases(int layerIdx, double[] gradient,double learningRate)

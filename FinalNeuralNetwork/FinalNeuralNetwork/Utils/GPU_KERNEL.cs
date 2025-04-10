@@ -29,10 +29,6 @@ namespace FinalNeuralNetwork.Utils
             int numberOfThreads
         )
         {
-
-            if (idx > 4)
-                return;
-
             #region Indexes
             var forwardDataIndex = idx * (forwardData.Length / numberOfThreads);
             var batchDataStartIndex = batchOffsets[idx];
