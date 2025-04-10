@@ -89,13 +89,16 @@ namespace FinalNeuralNetwork.Utils
             #region Calculate Output Gradient
             var networkPredictionStartIndex = idx * forwardLength + (forwardLength - layersCount[layersCount.Length - 1]);
             var outputBackwardIndex = 0;
+
+            gradientIndex -= layersCount[layersCount.Length - 1] - 1;
             for (int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
                 gradient[gradientIndex] = validPredictions[i] - forwardData[networkPredictionStartIndex + outputBackwardIndex];
                 gradient[gradientIndex] *= forwardData[networkPredictionStartIndex + outputBackwardIndex] * (1 - forwardData[networkPredictionStartIndex + outputBackwardIndex]);
-                gradientIndex--;
+                gradientIndex++;
                 outputBackwardIndex++;
             }
+            gradientIndex -= layersCount[layersCount.Length - 1] + 1;
 
             #endregion
 
@@ -106,34 +109,31 @@ namespace FinalNeuralNetwork.Utils
             var backwardDataIndex = (idx * gradientLength) + gradientLength - 1;
             for (int i = layersCount.IntLength - 2; i > 0; i--)
             {
-                var prevLayerCount = layersCount[i + 1];
                 var neuronEndIndex = neuronStartIndex - layersCount[i];
                 var saveStartBackwardingIndex = backwardDataIndex;
+                var tmpSaveWeightStart = weightStartIndex;
 
                 for (int j = neuronStartIndex; j > neuronEndIndex; j--)
                 {
                     backwardDataIndex = saveStartBackwardingIndex;
-                    var weightEndIndex = weightStartIndex - prevLayerCount;
-                    for (int k = weightStartIndex; k > weightEndIndex; k--)
+                    var weightAccessorIndex = tmpSaveWeightStart;
+                    for (int k = 0; k < layersCount[i+1]; k++)
                     {
-                        gradient[gradientIndex] = gradient[backwardDataIndex] * weights[k]; //input
-                        gradient[gradientIndex] *= forwardData[j - 2] * (1 - forwardData[j - 2]);
+                        gradient[gradientIndex] += gradient[backwardDataIndex] * weights[weightAccessorIndex]; //input
                         backwardDataIndex--;
+                        weightAccessorIndex -= layersCount[i];
                     }
+                    gradient[gradientIndex] *= forwardData[j - 2] * (1 - forwardData[j - 2]);
                     gradientIndex--;
-                    weightStartIndex = weightEndIndex;
+                    tmpSaveWeightStart--;
                 }
+
+                weightStartIndex -= layersCount[i + 1] * layersCount[i];
+                neuronStartIndex -= layersCount[i];
             }
             #endregion
 
             #endregion
-
-            //#region Save Gradient Build
-            //gradientSave[idx, 0] = gradient[idx * gradientLenght + gradientLenght-1];
-            ////gradientSave[idx, 0] = 4;
-            ////for (int i = 0; i < gradient.IntLength; i++)
-            ////    gradientSave[idx.X, i] = gradient[i];
-            //#endregion
         }
     }
 }

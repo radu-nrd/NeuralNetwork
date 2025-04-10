@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FinalNeuralNetwork.Utils
+namespace FinalNeuralNetwork.Models
 {
-    public enum ActivationFunction
+    public enum LayerType
     {
-        None,
-        Sigmoid,
-        Relu,
-        Softmax
+        Input,
+        Hidden,
+        Output
     }
-
 
 }

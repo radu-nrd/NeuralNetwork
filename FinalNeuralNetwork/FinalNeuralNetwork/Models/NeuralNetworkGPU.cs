@@ -139,35 +139,36 @@ namespace FinalNeuralNetwork.Models
         {
             var runThreads = batch.Length;
 
-            //var model = BuildGpuModel(batch, validResult,runThreads);
-            //var watch = Stopwatch.StartNew();
-            //for(int e = 0; e < epochs; e++)
-            //{
-            //    Console.WriteLine($"Epoch: {e+1}/{epochs}");
-            //    _trainKernel!
-            //    (
-            //        runThreads,
-            //        model.BatchBuffer.View,
-            //        model.BatchOffsetsBuffer.View,
-            //        model.ValidPredictionsBuffer.View,
-            //        model.ValidPredictionsOffsetsBuffer.View,
-            //        model.LayersBuffer.View,
-            //        model.LayersCountBuffer.View,
-            //        model.WeightsBuffer.View,
-            //        model.ActivationFunctionsBuffer.View,
-            //        model.ForwardDataBuffer.View,
-            //        model.InputBuffer.View,
-            //        model.GradientBuffer.View,
-            //        runThreads
-            //    );
-            //    //_graphicsAccelerator!.Synchronize();
-            //    //var gradient = model.GradientBuffer.GetAsArray1D();
-            //}
-            //Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
-            //watch.Stop();
-            var modelCPU = _Old_BuildGpuModel(batch, validResult, runThreads);
-            for (int i = 0; i < batch.Length; i++)
-                _TestKernel(i, modelCPU);
+            var model = BuildGpuModel(batch, validResult, runThreads);
+            var watch = Stopwatch.StartNew();
+            for (int e = 0; e < epochs; e++)
+            {
+                Console.WriteLine($"Epoch: {e + 1}/{epochs}");
+                _trainKernel!
+                (
+                    runThreads,
+                    model.BatchBuffer.View,
+                    model.BatchOffsetsBuffer.View,
+                    model.ValidPredictionsBuffer.View,
+                    model.ValidPredictionsOffsetsBuffer.View,
+                    model.LayersBuffer.View,
+                    model.LayersCountBuffer.View,
+                    model.WeightsBuffer.View,
+                    model.ActivationFunctionsBuffer.View,
+                    model.ForwardDataBuffer.View,
+                    model.InputBuffer.View,
+                    model.GradientBuffer.View,
+                    runThreads
+                );
+                _graphicsAccelerator!.Synchronize();
+                var gradient = model.GradientBuffer.GetAsArray1D();
+            }
+            Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
+            watch.Stop();
+
+            //var modelCPU = _Old_BuildGpuModel(batch, validResult, runThreads);
+            //for (int i = 0; i < batch.Length; i++)
+            //    _TestKernel(i, modelCPU);
         }
         private void _TestKernel(int idx,__OLD__Neural_Network_GPU_Setup setup)
         {
@@ -180,7 +181,6 @@ namespace FinalNeuralNetwork.Models
             var weightStartIndex = 0;
             var validPredictionStartIndex = setup.ValidPredictionOffsets[idx];
             var validPredictionEndIndex = idx == setup.NumberOfThreads-1? setup.ValidPredictions.Length : setup.ValidPredictionOffsets[idx + 1];
-            //var gradientIndex = setup.ForwardData.Length-1;
             var gradientLenght = setup.Gradient.Length / setup.NumberOfThreads;
             var forwardLenght = setup.ForwardData.Length / setup.NumberOfThreads;
             var gradientIndex = (idx * gradientLenght) + gradientLenght - 1; //starts at the end  
@@ -248,7 +248,6 @@ namespace FinalNeuralNetwork.Models
             neuronStartIndex = setup.Layers.Length - setup.LayersCount[setup.LayersCount.Length - 1] - 1;
             weightStartIndex = setup.Weights.Length - 1;
 
-            //var backwardDataIndex = setup.Gradient.Length - 1;
             var backwardDataIndex = (idx * gradientLenght) + gradientLenght - 1;
             for(int i = setup.LayersCount.Length - 2; i > 0; i--)
             {
