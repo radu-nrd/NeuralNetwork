@@ -79,11 +79,6 @@ namespace NN_MODEL.Models
         public void Train(double[][] batch, double[][] outcome,int epochs)
         {
             Console.WriteLine("Starting Train!");
-            //foreach(var key in _weights.Keys)
-            //{
-            //    Console.WriteLine($"{key} : {_weights[key].Value}");
-            //}
-            //Console.WriteLine();
             for (int e = 0;e<epochs;e++)
             {
                 double totalError = 0.0;
@@ -96,15 +91,10 @@ namespace NN_MODEL.Models
                     Train(data, valid_prediction);
                 }
                 Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
-                //foreach (var key in _weights.Keys)
-                //{
-                //    Console.WriteLine($"{key} : {_weights[key].Value}");
-                //}
-                //Console.WriteLine();
             }
         }
 
-        private void Train(IEnumerable<double> input, IEnumerable<double> outcome)
+        public void Train(IEnumerable<double> input, IEnumerable<double> outcome)
         {
             IEnumerable<double> prediction;
             var _tmpForwardSave = GetDataFromForward(input,out prediction);

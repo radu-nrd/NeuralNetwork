@@ -33,24 +33,56 @@ namespace NN_MODEL
             //model.BuildNeuralNetwork();
             //model.Setup();
 
-            //model.SaveModel("testGPU_Stability.nn");
+            //model.SaveModel("testt.nn");
 
-            var model = NeuralNetworkModel.LoadModel("testGPU_Stability.nn");
+            var model = NeuralNetworkModel.LoadModel("testt.nn");
             model.Setup();
 
-            Random rand = new Random();
-            //double[] array = new double[] { 0.33, 0.21 };
-            //double[] array = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
+            //var random = new Random();
 
-            //var dataFromCpu = model.Predict(array);
-            //var dataFromGPU = model.PredictGPU(array);
+            //var batch = new double[5][]
+            //{
+            //    Enumerable.Range(0,1000).Select(_=>random.NextDouble()).ToArray(),
+            //    Enumerable.Range(0,1000).Select(_=>random.NextDouble()).ToArray(),
+            //    Enumerable.Range(0,1000).Select(_=>random.NextDouble()).ToArray(),
+            //    Enumerable.Range(0,1000).Select(_=>random.NextDouble()).ToArray(),
+            //    Enumerable.Range(0,1000).Select(_=>random.NextDouble()).ToArray()
+            //};
+
+
+            //double[][] outcome = new double[5][]
+            //{
+            //    new double[]{0.123},
+            //    new double[]{0.123},
+            //    new double[]{0.123},
+            //    new double[]{0.123},
+            //    new double[]{0.123}
+            //};
+            var watch = new System.Diagnostics.Stopwatch();
+            //Console.WriteLine("GPU TEST");
+            //Console.WriteLine();
+            //watch.Reset();
+            //watch.Start();
+            //model.TrainOnGPU(batch, outcome, 20);
+            //watch.Stop();
+            //Console.WriteLine($"Done GPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
+            //Console.ReadKey();
+
+
+
+            //////Random rand = new Random();
+            //////double[] array = new double[] { 0.33, 0.21 };
+            //////double[] array = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
+
+            //////var dataFromCpu = model.Predict(array);
+            //////var dataFromGPU = model.PredictGPU(array);
 
             double[][] batch = new double[4][]
             {
                 new double[]{0.1,0.1},
                 new double[]{0.1,0.9},
                 new double[]{0.9,0.1},
-                new double[]{0.9,0.1}
+                new double[]{0.9,0.9}
             };
 
             double[][] outcome = new double[4][]
@@ -61,29 +93,29 @@ namespace NN_MODEL
                 new double[]{0.1},
             };
 
-            var watch = new System.Diagnostics.Stopwatch();
+            ////var watch = new System.Diagnostics.Stopwatch();
 
             watch.Start();
-            model.Train(batch, outcome, 1000);
+            model.Train(batch, outcome, 10000);
             watch.Stop();
             Console.WriteLine();
             Console.WriteLine($"Done CPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
             Console.WriteLine();
-
             Console.ReadKey();
-            Console.WriteLine("GPU TEST");
-            Console.WriteLine();
-            watch.Reset();
-            watch.Start();
-            model.TrainOnGPU(batch, outcome, 1000);
-            watch.Stop();
-            Console.WriteLine($"Done GPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
-            Console.ReadKey();
+            //Console.ReadKey();
+            //Console.WriteLine("GPU TEST");
+            //Console.WriteLine();
+            //watch.Reset();
+            //watch.Start();
+            //model.TrainOnGPU(batch, outcome, 1000);
+            //watch.Stop();
+            //Console.WriteLine($"Done GPU test, Time: {watch.Elapsed.TotalSeconds} seconds");
+            //Console.ReadKey();
 
-            //var predictAfterTrainCPU = model.Predict(array);
-            //var predictAfterTrainGPU = model.PredictGPU(array);
+            //////var predictAfterTrainCPU = model.Predict(array);
+            //////var predictAfterTrainGPU = model.PredictGPU(array);
 
-            Console.ReadKey();
+            ////Console.ReadKey();
         }
 
         static void SaveBuiltNeuralNetwork()
