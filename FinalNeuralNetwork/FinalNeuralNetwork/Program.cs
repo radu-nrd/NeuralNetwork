@@ -1,99 +1,253 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using FinalNeuralNetwork.Interfaces;
+using FinalNeuralNetwork.Utils;
 using System;
 using System.Diagnostics;
 
-
 //double[][] batch =
-//[
-//                [0.1,0.1],
-//                [0.1,0.9],
-//                [0.9,0.1],
-//                [0.9,0.9],
-//];
+//{
+//    new double[] { 0.1, 0.1 },
+//    new double[] { 0.9, 0.1 },
+//    new double[] { 0.1, 0.9 },
+//    new double[] { 0.9, 0.9 },
+//};
 
 //double[][] outcome =
-//[
-//                [0.1,0.1],
-//                [0.9,0.1],
-//                [0.9,0.1],
-//                [0.1,0.1],
-//                //[0.1],
-//                //[0.9],
-//                //[0.9],
-//                //[0.1]
-//];
-
-double[][] batch =
-{
-    new double[] { 0.1, 0.1 }, // Clasa 0
-    new double[] { 0.2, 0.8 }, // Clasa 1
-    new double[] { 0.8, 0.2 }, // Clasa 0
-    new double[] { 0.9, 0.9 }, // Clasa 1
-    new double[] { 0.3, 0.6 }, // Clasa 1
-    new double[] { 0.7, 0.3 }, // Clasa 0
-};
-
-double[][] outcome =
-{
-    new double[] { 1.0, 0.0 ,0.0}, // Clasa 0
-    new double[] { 0.0, 1.0 ,0.0}, // Clasa 1
-    new double[] { 1.0, 0.0 ,0.0}, // Clasa 0
-    new double[] { 0.0, 1.0 ,0.0}, // Clasa 1
-    new double[] { 0.0, 1.0 ,0.0},  //Clasa 1
-    new double[] { 1.0, 0.0 ,0.0}, // Clasa 0
-};
-
-
-//var nn = INeuralNetwork.CreateNetwork(6);
-//var inputLayer = new double[2];
-
-//nn.AppendLayer(inputLayer);
-//nn.AppendLayer(3);
-//nn.AppendLayer(6);
-//nn.AppendLayer(2);
-//nn.AppendLayer(4);
-//nn.AppendLayer(3);
-
-//nn.Build();
-////nn.Train(batch, outcome, 10000);
-////var test1 = nn.Predict([0.1, 0.9]);
-//nn.Save("random_layers.nn");
-
-
-
-
-var nn = INeuralNetwork.Load("random_layers.nn");
-//nn.Train(batch, outcome, 100000);
-nn.TrainGPU(batch, outcome, 10000);
-var da = nn.Predict([0.5, 0.9]);
-Console.WriteLine("Done");
-
-
-
-
-
-
-
-
-
-
-//var rand = new Random();
-//var batch = new double[100_000_000][];
-//var outcome = new double[100_000_000][];
-
-//for (int i = 0; i < batch.Length; i++)
 //{
-//    batch[i] = Enumerable.Range(0, 2).Select(_ => rand.NextDouble()).ToArray();
-//    outcome[i] = [rand.NextDouble()];
-//}
+//    new double[] { 0.1 },
+//    new double[] { 0.9 },
+//    new double[] { 0.9 },
+//    new double[] { 0.1 },
+//};
+
+//var (batch, outcome) = Utils.GetRandomData(10);
+
+var batch = new double[][]
+{
+    new double[] { -0.350389, 1.633029 },
+    new double[] { 0.825606, 0.393304 },
+    new double[] { -1.069308, -1.165488 },
+    new double[] { -1.391507, 1.335338 },
+    new double[] { 0.395025, 0.778593 },
+    new double[] { -1.514876, 1.700624 },
+    new double[] { 1.156075, -0.967077 },
+    new double[] { -0.984407, -1.068967 },
+    new double[] { -0.581664, 0.133066 },
+    new double[] { -0.161532, -0.689275 },
+    new double[] { 0.430351, -1.223594 },
+    new double[] { -0.621464, -0.424703 },
+    new double[] { -0.082162, 1.050104 },
+    new double[] { -0.925686, 0.096014 },
+    new double[] { 0.366401, -1.551236 },
+    new double[] { 0.416178, -1.114324 },
+    new double[] { -1.368583, 1.626590 },
+    new double[] { 1.594257, 1.131876 },
+    new double[] { -0.580442, -1.370864 },
+    new double[] { 0.668476, -0.164857 },
+    new double[] { -1.181101, 0.028905 },
+    new double[] { -1.469462, 1.487265 },
+    new double[] { -0.731231, 0.618193 },
+    new double[] { -0.557092, 0.116556 },
+    new double[] { 0.216037, -1.063861 },
+    new double[] { 1.607261, 1.014739 },
+    new double[] { 1.508281, 1.436230 },
+    new double[] { 0.384447, 1.531472 },
+    new double[] { -1.291464, -1.024674 },
+    new double[] { -1.433803, -0.569191 },
+    new double[] { -0.303879, -0.759280 },
+    new double[] { 1.143885, -0.458538 },
+    new double[] { -0.658345, 0.196238 },
+    new double[] { -1.118968, 1.110042 },
+    new double[] { -1.337332, 1.760407 },
+    new double[] { 0.958028, -1.015050 },
+    new double[] { -1.564430, 1.156751 },
+    new double[] { 0.742909, 0.852312 },
+    new double[] { 0.954822, -1.454066 },
+    new double[] { -0.403273, -1.306786 },
+    new double[] { 1.256946, 0.480070 },
+    new double[] { -0.493968, -1.490992 },
+    new double[] { -0.559490, -0.569709 },
+    new double[] { 0.817751, 0.530282 },
+    new double[] { 1.336264, -0.051953 },
+    new double[] { -1.189142, 0.796807 },
+    new double[] { 0.920327, 0.261670 },
+    new double[] { 0.953825, 0.024041 },
+    new double[] { 0.137153, -0.209267 },
+    new double[] { -1.498970, -1.334878 },
+    new double[] { -1.479198, 0.526243 },
+    new double[] { -0.548390, 0.076070 },
+    new double[] { 1.403226, -0.836951 },
+    new double[] { -0.232469, 0.945784 },
+    new double[] { -0.829869, -1.443730 },
+    new double[] { -0.629337, -1.147083 },
+    new double[] { 1.476036, 1.130901 },
+    new double[] { 0.501252, 1.353946 },
+    new double[] { 1.061422, -1.057820 },
+    new double[] { 1.353853, 0.184428 },
+    new double[] { 1.073818, 1.440681 },
+    new double[] { -0.536391, -1.327270 },
+    new double[] { -0.832708, -0.210793 },
+    new double[] { 1.108608, 1.316162 },
+    new double[] { -1.559725, 0.083734 },
+    new double[] { -0.209347, -0.932678 },
+    new double[] { -1.188250, -0.525931 },
+    new double[] { 1.519503, -0.576682 },
+    new double[] { 0.124184, 0.760798 },
+    new double[] { -0.386284, 1.707217 },
+    new double[] { 1.583780, -0.828182 },
+    new double[] { 0.053312, -0.655296 },
+    new double[] { -0.645494, -1.584912 },
+    new double[] { 0.422822, 0.055323 },
+    new double[] { -1.413236, -0.733583 },
+    new double[] { 1.405527, -0.871215 },
+    new double[] { -1.105904, 0.008748 },
+    new double[] { 1.660116, -0.862435 },
+    new double[] { 0.628677, 0.967153 },
+    new double[] { -0.800788, 0.849527 },
+    new double[] { -0.372619, 0.511789 },
+    new double[] { 0.501666, 0.171865 },
+    new double[] { -1.285551, 1.226620 },
+    new double[] { -0.527256, -1.058001 },
+    new double[] { -1.448450, 0.365958 },
+    new double[] { 0.646537, -1.656394 },
+    new double[] { 0.102149, -0.917226 },
+    new double[] { 0.539971, -1.100794 },
+    new double[] { 0.690534, -0.352960 },
+    new double[] { 1.499172, -1.230541 },
+    new double[] { -0.460515, -1.315221 },
+    new double[] { 1.459573, 1.374648 },
+    new double[] { -0.733989, 0.609255 },
+    new double[] { 1.106000, 0.240272 },
+    new double[] { 0.159912, -0.863150 },
+    new double[] { -1.276296, 1.444640 },
+    new double[] { 1.379708, 0.514591 },
+    new double[] { -0.467216, -0.485103 },
+    new double[] { 0.805741, 1.444269 },
+    new double[] { 1.335848, 1.031440 }
+};
+
+var outcome = new double[][]
+{
+    new double[] { -1.141577 },
+    new double[] { 0.484707 },
+    new double[] { -0.286655 },
+    new double[] { -1.855901 },
+    new double[] { -0.075063 },
+    new double[] { -2.148815 },
+    new double[] { 1.467893 },
+    new double[] { -0.265966 },
+    new double[] { -0.554749 },
+    new double[] { 0.223538 },
+    new double[] { 0.995445 },
+    new double[] { -0.297967 },
+    new double[] { -0.614579 },
+    new double[] { -0.822668 },
+    new double[] { 1.112415 },
+    new double[] { 0.926800 },
+    new double[] { -1.988198 },
+    new double[] { 0.742350 },
+    new double[] { 0.228225 },
+    new double[] { 0.643748 },
+    new double[] { -1.000991 },
+    new double[] { -1.999970 },
+    new double[] { -0.931842 },
+    new double[] { -0.525653 },
+    new double[] { 0.733488 },
+    new double[] { 0.814109 },
+    new double[] { 0.512333 },
+    new double[] { -0.475345 },
+    new double[] { -0.545322 },
+    new double[] { -0.900968 },
+    new double[] { 0.141108 },
+    new double[] { 1.193307 },
+    new double[] { -0.651607 },
+    new double[] { -1.511250 },
+    new double[] { -2.031687 },
+    new double[] { 1.327511 },
+    new double[] { -1.907400 },
+    new double[] { 0.177015 },
+    new double[] { 1.553096 },
+    new double[] { 0.342806 },
+    new double[] { 0.799669 },
+    new double[] { 0.362871 },
+    new double[] { -0.170837 },
+    new double[] { 0.406928 },
+    new double[] { 1.142502 },
+    new double[] { -1.406966 },
+    new double[] { 0.632220 },
+    new double[] { 0.783736 },
+    new double[] { 0.223300 },
+    new double[] { -0.557257 },
+    new double[] { -1.508423 },
+    new double[] { -0.497338 },
+    new double[] { 1.606553 },
+    new double[] { -0.685812 },
+    new double[] { 0.057893 },
+    new double[] { 0.071055 },
+    new double[] { 0.644168 },
+    new double[] { -0.285535 },
+    new double[] { 1.436059 },
+    new double[] { 1.034280 },
+    new double[] { 0.147336 },
+    new double[] { 0.242332 },
+    new double[] { -0.585530 },
+    new double[] { 0.241121 },
+    new double[] { -1.345568 },
+    new double[] { 0.310177 },
+    new double[] { -0.718477 },
+    new double[] { 1.568294 },
+    new double[] { -0.291903 },
+    new double[] { -1.210114 },
+    new double[] { 1.752717 },
+    new double[] { 0.385219 },
+    new double[] { 0.285213 },
+    new double[] { 0.324200 },
+    new double[] { -0.798325 },
+    new double[] { 1.626289 },
+    new double[] { -0.927738 },
+    new double[] { 1.834250 },
+    new double[] { 0.021946 },
+    new double[] { -1.110187 },
+    new double[] { -0.577156 },
+    new double[] { 0.329422 },
+    new double[] { -1.710924 },
+    new double[] { 0.109954 },
+    new double[] { -1.399417 },
+    new double[] { 1.400943 },
+    new double[] { 0.562175 },
+    new double[] { 1.023105 },
+    new double[] { 0.759964 },
+    new double[] { 1.891290 },
+    new double[] { 0.299407 },
+    new double[] { 0.503691 },
+    new double[] { -0.929498 },
+    new double[] { 0.798342 },
+    new double[] { 0.582278 },
+    new double[] { -1.816556 },
+    new double[] { 0.884199 },
+    new double[] { -0.137799 },
+    new double[] { -0.078316 },
+    new double[] { 0.578855 }
+};
 
 
-//var watch = Stopwatch.StartNew();
-////nn.Train(batch, outcome, 10000);
-//Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
-//watch.Stop();
-//Console.ReadKey();
-//nn.TrainGPU(batch, outcome, 1000);
-//Console.ReadKey();
+var model = INeuralNetwork.CreateNetwork(3);
+model.AppendLayer(2, LayerType.Input);
+model.AppendLayer(3, LayerType.Hidden);
+model.AppendLayer(1, LayerType.Output);
+
+model.Build();
+var watch = Stopwatch.StartNew();
+model.Train(batch, outcome, 100_000);
+//var nn = INeuralNetwork.Load("valid_neural_network.nn");
+Console.WriteLine($"Done! {watch.ElapsedMilliseconds} ms");
+
+Console.ReadKey();
+Console.WriteLine("Starting GPU Parallelization");
+watch = Stopwatch.StartNew();
+model.TrainGPU(batch, outcome, 100_000);
+watch.Stop();
+Console.WriteLine($"Done! {watch.ElapsedMilliseconds} ms");
+
+Console.WriteLine("Done!!!");
 

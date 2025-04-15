@@ -10,11 +10,27 @@ using System.Threading.Tasks;
 
 namespace FinalNeuralNetwork.Interfaces
 {
+    public enum LayerType
+    {
+        Input,
+        Hidden,
+        Output
+    }
+
+    public enum ActivationFunction
+    {
+        None,
+        Sigmoid,
+        Relu,
+        Softmax
+    }
+
     /// <summary>
     /// Base Interface of a Neural Network Model
     /// </summary>
     public interface INeuralNetwork : ITrainable,ITrainableGPU,IPredictable,ISaveable
     {
+
 
         /// <summary>
         /// Error of network for specific data after train.
@@ -30,40 +46,46 @@ namespace FinalNeuralNetwork.Interfaces
         /// Append layer to the network. Biases of neurons will be created randomly
         /// </summary>
         /// <param name="neuronsCount">Number of neurons that layer should contain</param>
-        void AppendLayer(int neuronsCount);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(int neuronsCount,LayerType layerType);
 
         /// <summary>
         /// Append layer to the network. Biases of neurons will be created randomly
         /// </summary>
         /// <param name="neuronsCount">Number of neurons that layer should contain</param>
         /// <param name="actv">Specific activation function</param>
-        void AppendLayer(int neuronsCount, ActivationFunction actv);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(int neuronsCount, LayerType layerType,ActivationFunction actv);
 
         /// <summary>
         /// Append layer to the network. On Forward, it will be passed after a SIGMOID activation.
         /// </summary>
         /// <param name="layer">Collection of neurons</param>
-        void AppendLayer(double[] layer);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(double[] layer,LayerType layerType);
 
         /// <summary>
         /// Append layer to the network. On Forward, it will be passed after a SIGMOID activation.
         /// </summary>
         /// <param name="layer">Collection of neurons</param>
-        void AppendLayer(IEnumerable<double> layer);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(IEnumerable<double> layer, LayerType layerType);
 
         /// <summary>
         /// Append layer to the network.
         /// </summary>
         /// <param name="layer">Collection of neurons</param>
         /// <param name="actv">Specific activation function</param>
-        void AppendLayer(double[] layer, ActivationFunction actv);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(double[] layer, LayerType layerType,ActivationFunction actv);
 
         /// <summary>
         /// Append layer to the network.
         /// </summary>
         /// <param name="layer">Collection of neurons</param>
         /// <param name="actv">Specific activation function</param>
-        void AppendLayer(IEnumerable<double> layer, ActivationFunction actv);
+        /// <param name="layerType">Type of layer that will be appended</param>
+        void AppendLayer(IEnumerable<double> layer, LayerType layerType,ActivationFunction actv);
 
         /// <summary>
         /// This method will connect the layers and will create weighs between neurons.
