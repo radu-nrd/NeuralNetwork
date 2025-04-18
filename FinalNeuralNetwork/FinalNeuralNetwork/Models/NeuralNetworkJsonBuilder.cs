@@ -1,4 +1,5 @@
-﻿using FinalNeuralNetwork.Utils;
+﻿using FinalNeuralNetwork.Interfaces;
+using FinalNeuralNetwork.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -48,15 +49,35 @@ namespace FinalNeuralNetwork.Models
                 WriteActivationLayerFunctions(jsonWriter);
                 jsonWriter.WriteEndObject();
 
-
+                jsonWriter.WritePropertyName("Layers_type");
+                jsonWriter.WriteStartObject();
+                WriteLayersType(jsonWriter);
+                jsonWriter.WriteEndObject();
             }
+        }
+        void WriteLayersType(JsonTextWriter jsonTextWriter)
+        {
+            for(int i = 0;i<model.LayersType.Length;i++)
+                WriteLayerType(ref jsonTextWriter, model.LayersType[i],i);
+        }
+        void WriteLayerType(ref JsonTextWriter jsonTextWriter,LayerType value,int idx) 
+        {
+            jsonTextWriter.WritePropertyName($"LayerType {idx}");
+            jsonTextWriter.WriteStartObject();
+
+            jsonTextWriter.WritePropertyName("Index");
+            jsonTextWriter.WriteValue(idx);
+
+            jsonTextWriter.WritePropertyName("Value");
+            jsonTextWriter.WriteValue(value.ToString());
+
+            jsonTextWriter.WriteEndObject();
         }
 
         void WriteActivationLayerFunctions(JsonTextWriter jsonTextWriter)
         {
             for (int i = 0; i < model.ActivationFunctions.Length; i++)
                 WriteActivationLayerFunction(ref jsonTextWriter, model.ActivationFunctions[i], i);
-
         }
         void WriteActivationLayerFunction(ref JsonTextWriter jsonWriter,ActivationFunction value,int idx)
         {

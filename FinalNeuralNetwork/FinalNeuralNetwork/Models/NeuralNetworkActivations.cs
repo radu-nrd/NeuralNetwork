@@ -1,4 +1,5 @@
-﻿using FinalNeuralNetwork.Utils;
+﻿using FinalNeuralNetwork.Interfaces;
+using FinalNeuralNetwork.Utils;
 using ILGPU.Runtime.Cuda;
 using System;
 using System.Collections.Generic;

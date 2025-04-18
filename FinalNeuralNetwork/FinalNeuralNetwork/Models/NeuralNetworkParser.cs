@@ -31,6 +31,7 @@ namespace FinalNeuralNetwork.Models
             InitializeWeights(ref model);
             BuildWeightsFromJson(jsonObj, ref model);
             BuildActivationLayerFunctionsFromJson(jsonObj,ref model);
+            BuildLayersTypeFromJson(jsonObj, ref model);
         }
         private static void InitializeWeights(ref NeuralNetwork model)
         {
@@ -52,10 +53,19 @@ namespace FinalNeuralNetwork.Models
                 model._aFunctions[index] = data;
             }
         }
+        private static void BuildLayersTypeFromJson(JObject jsonObj,ref NeuralNetwork model)
+        {
+            var layersType = jsonObj["Layers_type"]!.Values();
+            foreach(var type in layersType)
+            {
+                var index = Convert.ToInt32(type["Index"]);
+                var data = Enum.Parse<LayerType>(type["Value"]!.ToString());
+                model._layersType[index] = data;
+            }
+        }
 
         private static void BuildWeightsFromJson(JObject jsonObj, ref NeuralNetwork model)
         {
-            //model._weights[0] = [Enumerable.Repeat(double.NaN, model._layers[0].Length).ToArray()];
             var weights = jsonObj["Weights"]!.Values();
             foreach(var weightSet in weights)
             {

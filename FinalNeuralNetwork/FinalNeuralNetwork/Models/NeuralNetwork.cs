@@ -4,6 +4,7 @@ using FinalNeuralNetwork.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace FinalNeuralNetwork.Models
         private readonly double[][] _layers;
         private readonly double[][][] _weights;
         private readonly ActivationFunction[] _aFunctions;
+        private readonly LayerType[] _layersType;
 
         private bool _isBuilt;
         private double _error;
@@ -27,6 +29,7 @@ namespace FinalNeuralNetwork.Models
         public double[][] Layers => _layers;
 
         public ActivationFunction[] ActivationFunctions => _aFunctions;
+        public LayerType[] LayersType => _layersType;
 
         public double Error => _error;
 
@@ -35,6 +38,7 @@ namespace FinalNeuralNetwork.Models
             _layers = new double[layersCount][];
             _weights = new double[layersCount][][];
             _aFunctions = new ActivationFunction[layersCount];
+            _layersType = new LayerType[layersCount];
         }
         private void GetFreeLayerPosition(out int idx)
         {
@@ -52,53 +56,73 @@ namespace FinalNeuralNetwork.Models
             for(int i=0;i<layer.Length; i++)
                 layer[i] = Utils.Utils.Random.NextDouble();
         }
-        public void AppendLayer(int neuronsCount)
+        public void AppendLayer(int neuronsCount, LayerType layerType)
+        {
+            var layer = new double[neuronsCount];
+            if(layerType != LayerType.Input)
+                RandomInitializeLayer(ref layer);
+            this.AppendLayer(layer,layerType);
+        }
+        public void AppendLayer(int neuronsCount,LayerType layerType, ActivationFunction actv)
         {
             var layer = new double[neuronsCount];
             RandomInitializeLayer(ref layer);
-            this.AppendLayer(layer);
+            this.AppendLayer(layer,layerType, actv);
         }
-        public void AppendLayer(int neuronsCount, ActivationFunction actv)
+        public void AppendLayer(double[] layer, LayerType layerType)
         {
-            var layer = new double[neuronsCount];
-            RandomInitializeLayer(ref layer);
-            this.AppendLayer(layer,actv);
-        }
-        public void AppendLayer(double[] layer)
-        {
-            this.AppendLayer(layer, ActivationFunction.Sigmoid);
+            this.AppendLayer(layer, layerType, ActivationFunction.Sigmoid);
         }
 
-        public void AppendLayer(IEnumerable<double> layer)
+        public void AppendLayer(IEnumerable<double> layer, LayerType layerType)
         {
-            this.AppendLayer(layer.ToArray(),ActivationFunction.Sigmoid);
+            this.AppendLayer(layer.ToArray(),layerType, ActivationFunction.Sigmoid);
         }
 
-        public void AppendLayer(double[] layer, ActivationFunction actv)
+        public void AppendLayer(double[] layer, LayerType layerType, ActivationFunction actv)
         {
             GetFreeLayerPosition(out var idx);
-
-            if (idx == 0)
-                if (!IsEmptyVector(layer))
-                    throw new InvalidAppendLayerException("Cannot append a input layer that is not empty!");
 
             if (idx == -1)
                 throw new InvalidAppendLayerException("Neural network is at maximum size!");
 
             _layers[idx] = layer;
+            _layersType[idx] = layerType;
             _aFunctions[idx] = actv;
         }
         private bool IsEmptyVector(double[] vector) => !vector.Any(x=>x!=0);
-        private bool CheckIfIsReadyForBuild() => !_layers.Any(l => l is null);
-        public void AppendLayer(IEnumerable<double> layer, ActivationFunction actv)
+        private void CheckIfIsReadyForBuild()
         {
-            this.AppendLayer(layer.ToArray(), actv);
+            if(_layers.Any(l => l is null))
+                throw new NotReadyForBuildException("One or more layers are null");
+
+            if (_layersType[0] != LayerType.Input)
+                throw new NotReadyForBuildException("Cannot appent a first layer something that is not Input type!");
+
+            if (!IsEmptyVector(_layers[0]))
+                throw new NotReadyForBuildException("Cannot append a input layer that is not empty!");
+
+            for (int i = 0; i < _layers.Length - 1; i++)
+                if (_aFunctions[i] == ActivationFunction.Softmax)
+                    throw new NotReadyForBuildException("Softmax activation function is only for Output Layer!");
+
+            if (_layersType.Last() != LayerType.Output)
+                throw new NotReadyForBuildException("Last layer MUST be an Output type!");
+
+            if (_layersType.Count(l => l == LayerType.Input) > 1)
+                throw new NotReadyForBuildException("A Neural Network cannot contains more than ONE input layer!");
+
+            if (_layersType.Count(l => l == LayerType.Output) > 1)
+                throw new NotReadyForBuildException("A Neural Network cannot contains more than ONE output layer!");
+        }
+        public void AppendLayer(IEnumerable<double> layer, LayerType layerType, ActivationFunction actv)
+        {
+            this.AppendLayer(layer.ToArray(),layerType, actv);
         }
 
         public void Build()
         {
-            if (!CheckIfIsReadyForBuild())
-                throw new NotReadyForBuildException("Failed to build network. One or more layers are null");
+            CheckIfIsReadyForBuild();
             for(int i = 1;i< _layers.Length; i++)
             {
                 var currentLayer = _layers[i];
@@ -189,23 +213,29 @@ namespace FinalNeuralNetwork.Models
         }
         private void _TrainInputLayer(double[] gradient, double[] forwardData,double learningRate)
         {
-            //UpdateWeights(0, gradient, forwardData, learningRate);
+            UpdateWeights(0, gradient, forwardData, learningRate);
         }
         private void _TrainHiddenLayer(int layerIdx, double[] forwardData,ref double[] lastGradient,double learningRate)
         {
-            //UpdateWeights(layerIdx, lastGradient, forwardData, learningRate);
+            UpdateWeights(layerIdx, lastGradient, forwardData, learningRate);
             var backwardData = BackwardThroughNetwork(lastGradient, layerIdx);
             lastGradient = CalculateGradient(backwardData, forwardData, layerIdx);
-            //UpdateBiases(layerIdx, lastGradient, learningRate);
+            UpdateBiases(layerIdx, lastGradient, learningRate);
         }
         private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient,double learningRate)
         {
-            var outputError = CalculateOutputError(networkPrediction, validPrediction);
-            //var outputError = CalculateOutputErrorSOFTMAX(networkPrediction, validPrediction);
-            //lastGradient = outputError;
-            lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
-            //UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
+            if (_aFunctions[_layers.Length - 1] == ActivationFunction.Softmax)
+            {
+                var outputError = CalculateOutputError(networkPrediction, validPrediction);
+                lastGradient = outputError;
+            }
+            else
+            {
+                var outputError = CalculateOutputError(networkPrediction, validPrediction);
+                lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
+            }
 
+            UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
         }
         private void UpdateBiases(int layerIdx, double[] gradient,double learningRate)
         {
@@ -246,13 +276,12 @@ namespace FinalNeuralNetwork.Models
             {
                 var nRez = 0.0;
                 for (int i = 0; i < input.Length; i++)
-                    nRez += input[i] * layerWeights[i][n]; //BUG
+                    nRez += input[i] * layerWeights[i][n]; 
                 result[n] = nRez;
             }
 
             return result;
         }
-
 
         private Dictionary<int, double[]> GetDataFromForward(double[] input)
         {

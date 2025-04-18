@@ -9,6 +9,6 @@ namespace FinalNeuralNetwork.Exceptions
     public class NotReadyForBuildException : NeuralNetworkException
     {
         public NotReadyForBuildException()  : base() { }
-        public NotReadyForBuildException(string message) : base(message) { }
+        public NotReadyForBuildException(string message) : base($"Failed to build network. {message}") { }
     }
 }
