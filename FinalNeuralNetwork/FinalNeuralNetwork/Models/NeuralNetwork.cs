@@ -166,7 +166,7 @@ namespace FinalNeuralNetwork.Models
                     totalError += MSE(networkPrediction, validPrediction);
                     _Train(data, validPrediction, learningRate);
                 }
-                Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError / batch.Length}");
+                Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
             }
         }
 
@@ -224,12 +224,18 @@ namespace FinalNeuralNetwork.Models
         }
         private void _TrainOutputLayer(double[] networkPrediction, double[] validPrediction,ref double[] lastGradient,double learningRate)
         {
-            var outputError = CalculateOutputError(networkPrediction, validPrediction);
-            //var outputError = CalculateOutputErrorSOFTMAX(networkPrediction, validPrediction);
-            //lastGradient = outputError;
-            lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
-            UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
+            if (_aFunctions[_layers.Length - 1] == ActivationFunction.Softmax)
+            {
+                var outputError = CalculateOutputError(networkPrediction, validPrediction);
+                lastGradient = outputError;
+            }
+            else
+            {
+                var outputError = CalculateOutputError(networkPrediction, validPrediction);
+                lastGradient = CalculateGradient(outputError, networkPrediction, _layers.Length - 1);
+            }
 
+            UpdateBiases(_layers.Length - 1, lastGradient, learningRate);
         }
         private void UpdateBiases(int layerIdx, double[] gradient,double learningRate)
         {

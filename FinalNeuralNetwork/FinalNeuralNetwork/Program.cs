@@ -4,251 +4,46 @@ using FinalNeuralNetwork.Utils;
 using System;
 using System.Diagnostics;
 
+double[][] batch =
+{
+    new double[] { 0.1, 0.1 },
+    new double[] { 0.9, 0.1 },
+    new double[] { 0.1, 0.9 },
+    new double[] { 0.9, 0.9 },
+};
+
+double[][] outcome =
+{
+    new double[] { 0.1,0.9 },
+    new double[] { 0.9,0.1 },
+    new double[] { 0.9,0.1},
+    new double[] { 0.1,0.9},
+};
+
 //double[][] batch =
 //{
-//    new double[] { 0.1, 0.1 },
-//    new double[] { 0.9, 0.1 },
-//    new double[] { 0.1, 0.9 },
-//    new double[] { 0.9, 0.9 },
+//    new double[] { 0, 0 },
+//    new double[] { 1, 0 },
+//    new double[] { 0, 1 },
+//    new double[] { 1, 1},
 //};
 
 //double[][] outcome =
 //{
-//    new double[] { 0.1 },
-//    new double[] { 0.9 },
-//    new double[] { 0.9 },
-//    new double[] { 0.1 },
+//    new double[] { 0,1},
+//    new double[] { 1,0},
+//    new double[] { 1,0},
+//    new double[] { 0,1},
 //};
-
-//var (batch, outcome) = Utils.GetRandomData(10);
-
-var batch = new double[][]
-{
-    new double[] { -0.250920, 0.901429 },
-    new double[] { 0.463988, 0.197317 },
-    new double[] { -0.687963, -0.688011 },
-    new double[] { -0.883833, 0.732352 },
-    new double[] { 0.202230, 0.416145 },
-    new double[] { -0.958831, 0.939820 },
-    new double[] { 0.664885, -0.575322 },
-    new double[] { -0.636350, -0.633191 },
-    new double[] { -0.391516, 0.049513 },
-    new double[] { -0.136110, -0.417542 },
-    new double[] { 0.223706, -0.721012 },
-    new double[] { -0.415711, -0.267276 },
-    new double[] { -0.087860, 0.570352 },
-    new double[] { -0.600652, 0.028469 },
-    new double[] { 0.184829, -0.907099 },
-    new double[] { 0.215090, -0.658952 },
-    new double[] { -0.869897, 0.897771 },
-    new double[] { 0.931264, 0.616795 },
-    new double[] { -0.390772, -0.804656 },
-    new double[] { 0.368466, -0.119695 },
-    new double[] { -0.755924, -0.009646 },
-    new double[] { -0.931223, 0.818641 },
-    new double[] { -0.482440, 0.325045 },
-    new double[] { -0.376578, 0.040136 },
-    new double[] { 0.093421, -0.630291 },
-    new double[] { 0.939169, 0.550266 },
-    new double[] { 0.878998, 0.789655 },
-    new double[] { 0.195800, 0.843748 },
-    new double[] { -0.823015, -0.608034 },
-    new double[] { -0.909545, -0.349339 },
-    new double[] { -0.222645, -0.457302 },
-    new double[] { 0.657475, -0.286493 },
-    new double[] { -0.438131, 0.085392 },
-    new double[] { -0.718152, 0.604394 },
-    new double[] { -0.850899, 0.973774 },
-    new double[] { 0.544490, -0.602569 },
-    new double[] { -0.988956, 0.630923 },
-    new double[] { 0.413715, 0.458014 },
-    new double[] { 0.542541, -0.851911 },
-    new double[] { -0.283069, -0.768262 },
-    new double[] { 0.726207, 0.246596 },
-    new double[] { -0.338204, -0.872883 },
-    new double[] { -0.378035, -0.349633 },
-    new double[] { 0.459212, 0.275115 },
-    new double[] { 0.774425, -0.055570 },
-    new double[] { -0.760812, 0.426490 },
-    new double[] { 0.521570, 0.122554 },
-    new double[] { 0.541934, -0.012409 },
-    new double[] { 0.045466, -0.144918 },
-    new double[] { -0.949162, -0.784217 },
-    new double[] { -0.937142, 0.272821 },
-    new double[] { -0.371288, 0.017141 },
-    new double[] { 0.815133, -0.501416 },
-    new double[] { -0.179234, 0.511102 },
-    new double[] { -0.542404, -0.846040 },
-    new double[] { -0.420497, -0.677557 },
-    new double[] { 0.859395, 0.616241 },
-    new double[] { 0.266808, 0.742921 },
-    new double[] { 0.607344, -0.626860 },
-    new double[] { 0.785118, 0.078684 },
-    new double[] { 0.614880, 0.792183 },
-    new double[] { -0.363993, -0.779896 },
-    new double[] { -0.544130, -0.145784 },
-    new double[] { 0.636030, 0.721461 },
-    new double[] { -0.986096, 0.021495 },
-    new double[] { -0.165178, -0.555784 },
-    new double[] { -0.760269, -0.324770 },
-    new double[] { 0.885819, -0.353594 },
-    new double[] { 0.037581, 0.406038 },
-    new double[] { -0.272741, 0.943564 },
-    new double[] { 0.924895, -0.496435 },
-    new double[] { -0.005503, -0.398243 },
-    new double[] { -0.430319, -0.926226 },
-    new double[] { 0.219129, 0.005358 },
-    new double[] { -0.897042, -0.442707 },
-    new double[] { 0.816532, -0.520876 },
-    new double[] { -0.710210, -0.021094 },
-    new double[] { 0.971301, -0.515889 },
-    new double[] { 0.344271, 0.523239 },
-    new double[] { -0.524725, 0.456433 },
-    new double[] { -0.264434, 0.264612 },
-    new double[] { 0.267059, 0.071549 },
-    new double[] { -0.819420, 0.670605 },
-    new double[] { -0.358440, -0.626963 },
-    new double[] { -0.918450, 0.181786 },
-    new double[] { 0.355129, -0.966824 },
-    new double[] { 0.024186, -0.547008 },
-    new double[] { 0.290346, -0.651267 },
-    new double[] { 0.381875, -0.226529 },
-    new double[] { 0.873460, -0.724958 },
-    new double[] { -0.317867, -0.773053 },
-    new double[] { 0.849387, 0.754679 },
-    new double[] { -0.484117, 0.319968 },
-    new double[] { 0.634444, 0.110402 },
-    new double[] { 0.059301, -0.516295 },
-    new double[] { -0.813794, 0.794432 },
-    new double[] { 0.800836, 0.266203 },
-    new double[] { -0.321940, -0.301581 },
-    new double[] { 0.451911, 0.794221 },
-    new double[] { 0.774173, 0.559751 }
-};
-
-var outcome = new double[][]
-{
-    new double[] { 0.208325 },
-    new double[] { 0.622354 },
-    new double[] { 0.431888 },
-    new double[] { 0.143080 },
-    new double[] { 0.456224 },
-    new double[] { 0.127715 },
-    new double[] { 0.819677 },
-    new double[] { 0.435973 },
-    new double[] { 0.338323 },
-    new double[] { 0.570088 },
-    new double[] { 0.757480 },
-    new double[] { 0.415204 },
-    new double[] { 0.310274 },
-    new double[] { 0.278991 },
-    new double[] { 0.779561 },
-    new double[] { 0.744096 },
-    new double[] { 0.134936 },
-    new double[] { 0.674849 },
-    new double[] { 0.583827 },
-    new double[] { 0.671459 },
-    new double[] { 0.246254 },
-    new double[] { 0.134804 },
-    new double[] { 0.251700 },
-    new double[] { 0.345740 },
-    new double[] { 0.705007 },
-    new double[] { 0.693071 },
-    new double[] { 0.611659 },
-    new double[] { 0.335534 },
-    new double[] { 0.359458 },
-    new double[] { 0.271995 },
-    new double[] { 0.547901 },
-    new double[] { 0.781025 },
-    new double[] { 0.314470 },
-    new double[] { 0.170106 },
-    new double[] { 0.132483 },
-    new double[] { 0.804034 },
-    new double[] { 0.140772 },
-    new double[] { 0.528036 },
-    new double[] { 0.831166 },
-    new double[] { 0.614004 },
-    new double[] { 0.697576 },
-    new double[] { 0.622520 },
-    new double[] { 0.453882 },
-    new double[] { 0.599048 },
-    new double[] { 0.769177 },
-    new double[] { 0.182620 },
-    new double[] { 0.662013 },
-    new double[] { 0.700580 },
-    new double[] { 0.561178 },
-    new double[] { 0.361563 },
-    new double[] { 0.173998 },
-    new double[] { 0.353480 },
-    new double[] { 0.832380 },
-    new double[] { 0.296050 },
-    new double[] { 0.536747 },
-    new double[] { 0.534979 },
-    new double[] { 0.651025 },
-    new double[] { 0.387005 },
-    new double[] { 0.816906 },
-    new double[] { 0.748271 },
-    new double[] { 0.508296 },
-    new double[] { 0.586961 },
-    new double[] { 0.336273 },
-    new double[] { 0.537860 },
-    new double[] { 0.194991 },
-    new double[] { 0.598591 },
-    new double[] { 0.309943 },
-    new double[] { 0.827236 },
-    new double[] { 0.395687 },
-    new double[] { 0.198702 },
-    new double[] { 0.844402 },
-    new double[] { 0.614023 },
-    new double[] { 0.603344 },
-    new double[] { 0.584741 },
-    new double[] { 0.295325 },
-    new double[] { 0.834334 },
-    new double[] { 0.259682 },
-    new double[] { 0.850392 },
-    new double[] { 0.480752 },
-    new double[] { 0.220051 },
-    new double[] { 0.327025 },
-    new double[] { 0.584086 },
-    new double[] { 0.153051 },
-    new double[] { 0.544528 },
-    new double[] { 0.186535 },
-    new double[] { 0.817316 },
-    new double[] { 0.663611 },
-    new double[] { 0.760806 },
-    new double[] { 0.700739 },
-    new double[] { 0.855604 },
-    new double[] { 0.602437 },
-    new double[] { 0.610412 },
-    new double[] { 0.252225 },
-    new double[] { 0.700700 },
-    new double[] { 0.667615 },
-    new double[] { 0.145035 },
-    new double[] { 0.715157 },
-    new double[] { 0.461815 },
-    new double[] { 0.442891 },
-    new double[] { 0.636094 }
-};
-
 
 var model = INeuralNetwork.CreateNetwork(3);
 model.AppendLayer(2, LayerType.Input);
-model.AppendLayer(3, LayerType.Hidden);
-model.AppendLayer(1, LayerType.Output);
+model.AppendLayer(8, LayerType.Hidden,ActivationFunction.Relu);
+model.AppendLayer(2, LayerType.Output,ActivationFunction.Relu);
 
 model.Build();
-var watch = Stopwatch.StartNew();
-model.Train(batch, outcome, 100_000);
-var prediction = model.Predict([-0.687963, -0.688011]); //0.431888
-//var nn = INeuralNetwork.Load("valid_neural_network.nn");
-Console.WriteLine($"Done! {watch.ElapsedMilliseconds} ms");
-
-Console.ReadKey();
-Console.WriteLine("Starting GPU Parallelization");
-watch = Stopwatch.StartNew();
-model.TrainGPU(batch, outcome, 100_000);
-watch.Stop();
-Console.WriteLine($"Done! {watch.ElapsedMilliseconds} ms");
+model.Train(batch, outcome, 10000,0.01);
+var pred = model.Predict([1, 1]); // 0,1
 
 Console.WriteLine("Done!!!");
 
