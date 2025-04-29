@@ -66,7 +66,8 @@ namespace FinalNeuralNetwork.Models
         public void AppendLayer(int neuronsCount,LayerType layerType, ActivationFunction actv)
         {
             var layer = new double[neuronsCount];
-            RandomInitializeLayer(ref layer);
+            if (layerType != LayerType.Input)
+                RandomInitializeLayer(ref layer);
             this.AppendLayer(layer,layerType, actv);
         }
         public void AppendLayer(double[] layer, LayerType layerType)
@@ -209,7 +210,7 @@ namespace FinalNeuralNetwork.Models
         {
             for(int i = 0;i< _weights[layerIdx + 1].Length; i++) // layerWeights
                 for (int j = 0; j < _weights[layerIdx + 1][i].Length; j++) // neuronWeights
-                    _weights[layerIdx + 1][i][j] += learningRate * gradient[i] * forwardData[j];
+                    _weights[layerIdx + 1][i][j] -= learningRate * gradient[i] * forwardData[j];
         }
         private void _TrainInputLayer(double[] gradient, double[] forwardData,double learningRate)
         {
@@ -229,6 +230,11 @@ namespace FinalNeuralNetwork.Models
                 var outputError = CalculateOutputError(networkPrediction, validPrediction);
                 lastGradient = outputError;
             }
+            else if (_aFunctions[_layers.Length - 1] == ActivationFunction.None)
+            {
+                var outputError = CalculateOutputError(networkPrediction, validPrediction);
+                lastGradient = [2 * outputError.ElementAt(0)];
+            }
             else
             {
                 var outputError = CalculateOutputError(networkPrediction, validPrediction);
@@ -240,13 +246,13 @@ namespace FinalNeuralNetwork.Models
         private void UpdateBiases(int layerIdx, double[] gradient,double learningRate)
         {
             for(int i = 0;i < _layers[layerIdx].Length;i++)
-                _layers[layerIdx][i] += gradient[i] * learningRate;
+                _layers[layerIdx][i] -= gradient[i] * learningRate;
         }
         private double[] CalculateOutputError(double[] networkPrediction, double[] validPrediction)
         {
             var cache = new double[networkPrediction.Length];
             for(int i = 0;i< cache.Length;i++)
-                cache[i] = validPrediction[i] - networkPrediction[i];
+                cache[i] = networkPrediction[i] - validPrediction[i];
             return cache;
         }
         private double[] CalculateOutputErrorSOFTMAX(double[] networkPrediction, double[] validPrediction)

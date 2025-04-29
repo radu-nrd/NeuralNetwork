@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace FinalNeuralNetwork.Models
 {
-    public partial class NeuralNetwork
+    sealed partial class NeuralNetwork
     {
         CLAccelerator? _graphicsAccelerator;
 
