@@ -158,17 +158,22 @@ namespace FinalNeuralNetwork.Models
             Console.WriteLine("Starting Train!");
             for(int e = 0; e < epochs; e++)
             {
-                double totalError = 0.0;
-                for(int i = 0; i < batch.Length; i++)
-                {
-                    var data = batch[i];
-                    var validPrediction = validResult[i];
-                    var networkPrediction = Predict(data);
-                    totalError += MSE(networkPrediction, validPrediction);
-                    _Train(data, validPrediction, learningRate);
-                }
+                var totalError = TrainStep(batch, validResult, learningRate);
                 Console.WriteLine($"Epoch {e + 1}/{epochs}: Total Error: {totalError}");
             }
+        }
+        public double TrainStep(double[][] batch, double[][] validResult, double learningRate = 0.1)
+        {
+            double totalError = 0.0;
+            for (int i = 0; i < batch.Length; i++)
+            {
+                var data = batch[i];
+                var validPrediction = validResult[i];
+                var networkPrediction = Predict(data);
+                totalError += MSE(networkPrediction, validPrediction);
+                _Train(data, validPrediction, learningRate);
+            }
+            return totalError;
         }
 
         public void Train(double[,] batch, double[,] validResult, int epochs, double learningRate = 0.1)

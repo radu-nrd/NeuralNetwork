@@ -46,12 +46,12 @@ namespace FinalNeuralNetwork
             };
 
             var network = INeuralNetwork.CreateNetwork(3);
-            network.AppendLayer(2, LayerType.Input);
-            network.AppendLayer(3, LayerType.Hidden,ActivationFunction.Relu);
-            network.AppendLayer(1, LayerType.Output, ActivationFunction.None);
+            network.AppendLayer(2, LayerType.Input,ActivationFunction.None);
+            network.AppendLayer(3, LayerType.Hidden,ActivationFunction.Sigmoid);
+            network.AppendLayer(1, LayerType.Output, ActivationFunction.Sigmoid);
 
             network.Build();
-            network.Train(inputs, targets, 10000, 0.001);
+            network.Train(inputs, targets, 100000, 0.1);
 
             Console.ReadKey();
 
