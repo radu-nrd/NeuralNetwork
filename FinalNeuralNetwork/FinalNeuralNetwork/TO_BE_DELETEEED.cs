@@ -12,15 +12,15 @@ namespace FinalNeuralNetwork
         static void Main(string[] args)
         {
 
-            var trained_nn = INeuralNetwork.Load("7_input_1_output_with_activation.nn");
+            var trained_nn = INeuralNetwork.Load("2output.nn");
             double[] data = [
-                0.60034,
-                0.001,
-                0.90001,
-                0.780896797,
-                0.001,
-                0.827838707,
-                0.666933333
+                0.50045,
+                0.20078,
+                0.40056,
+                0.871909807,
+                0.867575169,
+                0.006482074,
+                0.222977778, 
                 ];
             var result = trained_nn.Predict(data);
             //var denormalized_rez = Math.Exp(result.ElementAt(0)) - 1;

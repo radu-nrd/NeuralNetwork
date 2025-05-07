@@ -33,6 +33,8 @@ namespace FinalNeuralNetwork.Models
 
         public double Error => _error;
 
+        public int OutputSize => _layers[_layers.Length-1].Length;
+
         public NeuralNetwork(int layersCount)
         {
             _layers = new double[layersCount][];

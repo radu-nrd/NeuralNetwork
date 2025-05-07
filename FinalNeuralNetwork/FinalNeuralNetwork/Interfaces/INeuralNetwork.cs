@@ -43,6 +43,11 @@ namespace FinalNeuralNetwork.Interfaces
         bool IsBuilt {  get; }
 
         /// <summary>
+        /// Get output neurons count.
+        /// </summary>
+        int OutputSize {  get; }
+
+        /// <summary>
         /// Append layer to the network. Biases of neurons will be created randomly
         /// </summary>
         /// <param name="neuronsCount">Number of neurons that layer should contain</param>
