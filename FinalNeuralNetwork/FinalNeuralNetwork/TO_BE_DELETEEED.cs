@@ -11,6 +11,25 @@ namespace FinalNeuralNetwork
     {
         static void Main(string[] args)
         {
+
+            var trained_nn = INeuralNetwork.Load("7_input_1_output_with_activation.nn");
+            double[] data = [
+                0.60034,
+                0.001,
+                0.90001,
+                0.780896797,
+                0.001,
+                0.827838707,
+                0.666933333
+                ];
+            var result = trained_nn.Predict(data);
+            //var denormalized_rez = Math.Exp(result.ElementAt(0)) - 1;
+            Console.ReadKey();
+
+        }
+
+        static void da()
+        {
             //double[][] inputs = new double[][]
             //{
             //    new double[] { 0.5, 1.0 },
@@ -46,15 +65,12 @@ namespace FinalNeuralNetwork
             };
 
             var network = INeuralNetwork.CreateNetwork(3);
-            network.AppendLayer(2, LayerType.Input,ActivationFunction.None);
-            network.AppendLayer(3, LayerType.Hidden,ActivationFunction.Sigmoid);
+            network.AppendLayer(2, LayerType.Input, ActivationFunction.None);
+            network.AppendLayer(3, LayerType.Hidden, ActivationFunction.Sigmoid);
             network.AppendLayer(1, LayerType.Output, ActivationFunction.Sigmoid);
 
             network.Build();
             network.Train(inputs, targets, 100000, 0.1);
-
-            Console.ReadKey();
-
         }
     }
 }
