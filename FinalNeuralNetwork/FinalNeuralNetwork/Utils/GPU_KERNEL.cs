@@ -26,6 +26,7 @@ namespace FinalNeuralNetwork.Utils
             ArrayView1D<double, Stride1D.Dense> forwardData,
             ArrayView1D<double, Stride1D.Dense> input,
             ArrayView1D<double, Stride1D.Dense> gradient,
+            ArrayView1D<double,Stride1D.Dense> totalError,
             int numberOfThreads
         )
         {
@@ -68,7 +69,7 @@ namespace FinalNeuralNetwork.Utils
                         forwardData[forwardDataIndex] += weights[k] * input[inputIndex];
                         inputIndex++;
                     }
-                    forwardData[forwardDataIndex] = 1 / (1 + XMath.Exp(-forwardData[forwardDataIndex]));
+                    forwardData[forwardDataIndex] = 1 / (1 + Math.Exp(-forwardData[forwardDataIndex]));
                     forwardDataIndex++;
                     weightStartIndex = weightEndIndex;
                 }
@@ -93,7 +94,8 @@ namespace FinalNeuralNetwork.Utils
             gradientIndex -= layersCount[layersCount.Length - 1] - 1;
             for (int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
-                gradient[gradientIndex] = validPredictions[i] - forwardData[networkPredictionStartIndex + outputBackwardIndex];
+                gradient[gradientIndex] = forwardData[networkPredictionStartIndex + outputBackwardIndex] - validPredictions[i];
+                totalError[idx] = gradient[gradientIndex] * gradient[gradientIndex];
                 gradient[gradientIndex] *= forwardData[networkPredictionStartIndex + outputBackwardIndex] * (1 - forwardData[networkPredictionStartIndex + outputBackwardIndex]);
                 gradientIndex++;
                 outputBackwardIndex++;
@@ -123,7 +125,7 @@ namespace FinalNeuralNetwork.Utils
                         backwardDataIndex--;
                         weightAccessorIndex -= layersCount[i];
                     }
-                    gradient[gradientIndex] *= forwardData[j - 2] * (1 - forwardData[j - 2]);
+                    gradient[gradientIndex] *= forwardData[(idx * forwardLength) + j - 2] * (1 - forwardData[(idx * forwardLength) + j - 2]);
                     gradientIndex--;
                     tmpSaveWeightStart--;
                 }

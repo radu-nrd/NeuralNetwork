@@ -13,45 +13,8 @@ namespace FinalNeuralNetwork.Models
 {
     sealed partial class NeuralNetwork
     {
-        CLAccelerator? _graphicsAccelerator;
-
-        private Action
-            <
-            Index1D,
-            ArrayView1D<double,Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double,Stride1D.Dense>,
-            ArrayView1D<int,Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double,Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            int
-            >? _trainKernel;
-        private void GPUSetup()
-        {
-            _graphicsAccelerator = Context.Create(b => b.OpenCL().EnableAlgorithms()).CreateCLAccelerator(0);
-            _trainKernel = _graphicsAccelerator
-                .LoadAutoGroupedStreamKernel<
-            Index1D,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D< double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<int, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            ArrayView1D<double, Stride1D.Dense>,
-            int
-            > (GPU_KERNEL._Train);
-        }
-
+        private NeuralNetworkGpuSetup gpuSetup;
+        public NeuralNetworkGpuSetup GpuSetup => gpuSetup;
         private __OLD__Neural_Network_GPU_Setup _Old_BuildGpuModel(double[][] batch, double[][] validResult,int numberOfThreads)
         {
             return new __OLD__Neural_Network_GPU_Setup
@@ -67,25 +30,7 @@ namespace FinalNeuralNetwork.Models
                 ForwardData = new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)],
                 Input = new double[numberOfThreads * _layers.Select(l => l.Length).ToArray().Max()],
                 Gradient = new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)],
-                NumberOfThreads = numberOfThreads
-            };
-        }
-        private NeuralNetworkGpuSetup BuildGpuModel(double[][] batch, double[][] validResult,int numberOfThreads)
-        {
-            GPUSetup();
-            return new NeuralNetworkGpuSetup
-            {
-                BatchBuffer = _graphicsAccelerator!.Allocate1D(BuildFlatArrayFrom2D(batch)),
-                BatchOffsetsBuffer = _graphicsAccelerator!.Allocate1D(BuildOffsetForArray2D(batch)),
-                ValidPredictionsBuffer = _graphicsAccelerator!.Allocate1D(BuildFlatArrayFrom2D(validResult)),
-                ValidPredictionsOffsetsBuffer = _graphicsAccelerator!.Allocate1D(BuildOffsetForArray2D(validResult)),
-                LayersBuffer = _graphicsAccelerator!.Allocate1D(BuildFlatArrayFrom2D(_layers)),
-                LayersCountBuffer = _graphicsAccelerator!.Allocate1D(_layers.Select(l => l.Length).ToArray()),
-                WeightsBuffer = _graphicsAccelerator!.Allocate1D(BuildFlatArrayFrom3D(_weights)),
-                ActivationFunctionsBuffer = _graphicsAccelerator!.Allocate1D([0]),
-                ForwardDataBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
-                InputBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * _layers.Select(l => l.Length).ToArray().Max()]),
-                GradientBuffer = _graphicsAccelerator!.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
+                TotalError = new double[batch.Length],
                 NumberOfThreads = numberOfThreads
             };
         }
@@ -103,17 +48,10 @@ namespace FinalNeuralNetwork.Models
         private T[] BuildFlatArrayFrom2D<T>(T[][] array)
         {
             List<T> result = new List<T>();
-            int[] offsets = new int[array.Length];
-
             for (int i = 0; i < array.Length; i++)
             {
                 for (int j = 0; j < array[i].Length; j++)
                     result.Add(array[i][j]);
-                if (i < 1)
-                    offsets[i] = 0;
-                else
-                    offsets[i] = offsets[i - 1] + array[i-1].Length;
-
             }
             return result.ToArray();
         }
@@ -137,39 +75,145 @@ namespace FinalNeuralNetwork.Models
 
         public void TrainGPU(double[][] batch, double[][] validResult, int epochs, double learningRate = 0.1)
         {
-            var runThreads = batch.Length;
-
-            var model = BuildGpuModel(batch, validResult, runThreads);
-            var watch = Stopwatch.StartNew();
+            var totalError = 0.0;
+            InitializeGPU(batch, validResult);
             for (int e = 0; e < epochs; e++)
             {
-                Console.WriteLine($"Epoch: {e + 1}/{epochs}");
-                _trainKernel!
-                (
-                    runThreads,
-                    model.BatchBuffer.View,
-                    model.BatchOffsetsBuffer.View,
-                    model.ValidPredictionsBuffer.View,
-                    model.ValidPredictionsOffsetsBuffer.View,
-                    model.LayersBuffer.View,
-                    model.LayersCountBuffer.View,
-                    model.WeightsBuffer.View,
-                    model.ActivationFunctionsBuffer.View,
-                    model.ForwardDataBuffer.View,
-                    model.InputBuffer.View,
-                    model.GradientBuffer.View,
-                    runThreads
-                );
-                _graphicsAccelerator!.Synchronize();
-                var gradient = model.GradientBuffer.GetAsArray1D();
+                totalError = TrainStepGPU(batch,learningRate);
+                Console.WriteLine($"Epoch: {e + 1}/{epochs}: {totalError}");
             }
-            Console.WriteLine($"Done! Time Elapsed: {watch.ElapsedMilliseconds} ms");
-            watch.Stop();
 
+            #region CPU TEST WITH GPU CODE
             //var modelCPU = _Old_BuildGpuModel(batch, validResult, runThreads);
-            //for (int i = 0; i < batch.Length; i++)
-            //    _TestKernel(i, modelCPU);
+            //for (int e = 0; e < epochs; e++)
+            //{
+            //    for (int i = 0; i < batch.Length; i++)
+            //        _TestKernel(i, modelCPU);
+
+            //    var totalErrorTest = modelCPU.TotalError.Sum();
+            //    Console.WriteLine($"Epoch: {e}/{epochs} : Error: {totalErrorTest}");
+            //    var validNeuronsCount = modelCPU.LayersCount.Sum() - modelCPU.LayersCount[0];
+
+            //    for (int i = 0; i < runThreads; i++)
+            //    {
+            //        double[] gradients = modelCPU.Gradient.Skip(i * validNeuronsCount).Take(validNeuronsCount).ToArray();
+            //        double[] forwardData = modelCPU.ForwardData.Skip(i * validNeuronsCount).Take(validNeuronsCount).ToArray();
+            //        UpdateNetwork(batch[i], gradients, forwardData, learningRate);
+            //    }
+
+            //    modelCPU.Layers = BuildFlatArrayFrom2D(_layers);
+            //    modelCPU.Weights = BuildFlatArrayFrom3D(_weights);
+            //}
+            #endregion
         }
+
+        public double TrainStepGPU(
+            double[][] batch,
+            double learningRate = 0.1)
+        {
+            var totalError = 0.0;
+
+            gpuSetup.Kernel
+               (
+                   batch.Length,
+                   gpuSetup.BatchBuffer.View,
+                   gpuSetup.BatchOffsetsBuffer.View,
+                   gpuSetup.ValidPredictionsBuffer.View,
+                   gpuSetup.ValidPredictionsOffsetsBuffer.View,
+                   gpuSetup.LayersBuffer.View,
+                   gpuSetup.LayersCountBuffer.View,
+                   gpuSetup.WeightsBuffer.View,
+                   gpuSetup.ActivationFunctionsBuffer.View,
+                   gpuSetup.ForwardDataBuffer.View,
+                   gpuSetup.InputBuffer.View,
+                   gpuSetup.GradientBuffer.View,
+                   gpuSetup.TotalErrorBuffer.View,
+                   batch.Length
+               );
+            gpuSetup.Accelerator.Synchronize();
+
+            totalError = gpuSetup.TotalErrorBuffer.GetAsArray1D().Sum();
+            var validNeuronsCount = gpuSetup.LayersCountBuffer.GetAsArray1D().Sum() - gpuSetup.LayersCountBuffer.GetAsArray1D()[0];
+            var gradients = Build2DArrayFromFlat(gpuSetup.GradientBuffer.GetAsArray1D(),validNeuronsCount);
+            var forwardData = Build2DArrayFromFlat(gpuSetup.ForwardDataBuffer.GetAsArray1D(), validNeuronsCount);
+
+            for (int i = 0; i < batch.Length; i++)
+                UpdateNetwork(batch[i], gradients[i], forwardData[i], learningRate);
+
+            double[] flatLayers = BuildFlatArrayFrom2D(_layers);
+            double[] flatWeights = BuildFlatArrayFrom3D(_weights);
+
+            gpuSetup.LayersBuffer.View.CopyFromCPU(flatLayers);
+            gpuSetup.WeightsBuffer.View.CopyFromCPU(flatWeights);
+
+            return totalError;
+        }
+        private T[][] Build2DArrayFromFlat<T>(T[] array, int eachArrayCount)
+        {
+            if (array.Length % eachArrayCount != 0)
+                throw new InvalidOperationException("The given array cannot be divided by eachArrayCount!");
+
+            T[][] cache = new T[array.Length/eachArrayCount][];
+            T[] tmpArray = new T[eachArrayCount];
+            tmpArray[0] = array[0];
+            int matrixIdx = 0;
+            for(int i = 1; i < array.Length; i++)
+            {
+                if (i % eachArrayCount == 0)
+                {
+                    cache[matrixIdx] = tmpArray;
+                    tmpArray = new T[eachArrayCount];
+                    matrixIdx++;
+                }
+                tmpArray[i % eachArrayCount] = array[i];
+            }
+            cache[matrixIdx] = tmpArray;
+            return cache;
+               
+        }
+
+        private void UpdateNetwork(double[] input,double[] gradient, double[] forwardData,double learningRate)
+        {
+            var networkIdx = gradient.Length - _layers[_layers.Length - 1].Length;
+            #region OutputLayers
+            for (int i = 0; i < _layers[_layers.Length - 1].Length; i++)
+                _layers[_layers.Length - 1][i] -= learningRate * gradient[networkIdx + i];
+            #endregion
+
+            #region Hidden Layers
+
+            for (int i = _layers.Length - 2; i > 0; i--)
+            {
+                var forwardDataIdx = networkIdx - _layers[i].Length;
+                for (int j = 0; j < _weights[i+1].Length; j++)
+                {
+                    for(int k = 0; k < _weights[i + 1][j].Length; k++)
+                    {
+                        _weights[i + 1][j][k] -= learningRate * gradient[networkIdx + j] * forwardData[forwardDataIdx + k];
+                    }
+                }
+
+                networkIdx -= _layers[i].Length;
+                for (int neuronIdx = 0; neuronIdx < _layers[i].Length; neuronIdx++)
+                    _layers[i][neuronIdx] -= learningRate * gradient[networkIdx + neuronIdx];
+
+            }
+            #endregion
+
+            #region Input Layer
+
+            for (int j = 0; j < _weights[1].Length; j++)
+            {
+                for (int k = 0; k < _weights[1][j].Length; k++)
+                {
+                    _weights[1][j][k] -= learningRate * gradient[networkIdx + j] * input[k];
+                }
+            }
+
+            #endregion
+
+        }
+
         private void _TestKernel(int idx,__OLD__Neural_Network_GPU_Setup setup)
         {
             #region Indexes
@@ -236,7 +280,8 @@ namespace FinalNeuralNetwork.Models
             gradientIndex -= setup.LayersCount[setup.LayersCount.Length - 1] - 1;
             for(int i = validPredictionStartIndex; i < validPredictionEndIndex; i++)
             {
-                setup.Gradient[gradientIndex] = setup.ValidPredictions[i] - setup.ForwardData[networkPredictionStartIndex + outputBackwardIndex];
+                setup.Gradient[gradientIndex] = setup.ForwardData[networkPredictionStartIndex + outputBackwardIndex] - setup.ValidPredictions[i];
+                setup.TotalError[idx] = setup.Gradient[gradientIndex] * setup.Gradient[gradientIndex];
                 setup.Gradient[gradientIndex] *= SigmoidDerivative(setup.ForwardData[networkPredictionStartIndex + outputBackwardIndex]);
                 gradientIndex++;
                 outputBackwardIndex++;
@@ -261,7 +306,7 @@ namespace FinalNeuralNetwork.Models
                     var weightAccessorIndex = tmpSaveWeightStart;
                     for(int k = 0;k< setup.LayersCount[i+1]; k++)
                     {
-                        setup.Gradient[gradientIndex] += setup.Gradient[backwardDataIndex] * setup.Weights[weightAccessorIndex]; //input //BUBAAA
+                        setup.Gradient[gradientIndex] += setup.Gradient[backwardDataIndex] * setup.Weights[weightAccessorIndex]; //input
                         backwardDataIndex--;
                         weightAccessorIndex -= setup.LayersCount[i];
                     }
@@ -285,6 +330,70 @@ namespace FinalNeuralNetwork.Models
         public void TrainGPU(IEnumerable<IEnumerable<double>> batch, IEnumerable<IEnumerable<double>> validResult, int epochs, double learningRate = 0.1)
         {
             throw new NotImplementedException();
+        }
+
+        public NeuralNetworkGpuSetup GetOptimalGPUModel(double[][] batch, double[][] validResult)
+        {
+            var accelerator = GetOptimalAccelerator();
+            var numberOfThreads = batch.Length;
+            return new NeuralNetworkGpuSetup
+            {
+                Accelerator = accelerator,
+                Kernel = accelerator
+                    .LoadAutoGroupedStreamKernel<
+                        Index1D,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<int, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<int, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<int, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<int, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        ArrayView1D<double, Stride1D.Dense>,
+                        int
+                    >(GPU_KERNEL._Train),
+                BatchBuffer = accelerator.Allocate1D(BuildFlatArrayFrom2D(batch)),
+                BatchOffsetsBuffer = accelerator.Allocate1D(BuildOffsetForArray2D(batch)),
+                ValidPredictionsBuffer = accelerator.Allocate1D(BuildFlatArrayFrom2D(validResult)),
+                ValidPredictionsOffsetsBuffer = accelerator.Allocate1D(BuildOffsetForArray2D(validResult)),
+                LayersBuffer = accelerator.Allocate1D(BuildFlatArrayFrom2D(_layers)),
+                LayersCountBuffer = accelerator.Allocate1D(_layers.Select(l => l.Length).ToArray()),
+                WeightsBuffer = accelerator.Allocate1D(BuildFlatArrayFrom3D(_weights)),
+                ActivationFunctionsBuffer = accelerator.Allocate1D([0]),
+                ForwardDataBuffer = accelerator.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
+                InputBuffer = accelerator.Allocate1D(new double[numberOfThreads * _layers.Select(l => l.Length).ToArray().Max()]),
+                GradientBuffer = accelerator.Allocate1D(new double[numberOfThreads * (_layers.Select(l => l.Length).ToArray().Sum() - _layers[0].Length)]),
+                TotalErrorBuffer = accelerator.Allocate1D(new double[batch.Length]),
+                NumberOfThreads = numberOfThreads
+            };
+        }
+
+        private Accelerator GetOptimalAccelerator()
+        {
+            var context = Context.CreateDefault();
+
+            var cudaAccelerator = context.Devices.FirstOrDefault(d => d.AcceleratorType == AcceleratorType.Cuda);
+            if (cudaAccelerator is not null)
+                return cudaAccelerator.CreateAccelerator(context);
+
+            var openCLAccelerator = context.Devices.FirstOrDefault(d=>d.AcceleratorType == AcceleratorType.OpenCL);
+            if(openCLAccelerator is not null)
+                return openCLAccelerator.CreateAccelerator(context);
+
+            var cpuAccelerator = context.Devices.FirstOrDefault(d => d.AcceleratorType == AcceleratorType.CPU);
+            if(cpuAccelerator is not null)
+                return cpuAccelerator.CreateAccelerator(context);
+
+            throw new InvalidOperationException("Your machine does not have posibility to create an Accelerator");
+        }
+
+        public void InitializeGPU(double[][] batch, double[][] validResult)
+        {
+            gpuSetup = GetOptimalGPUModel(batch, validResult);
         }
     }
 }

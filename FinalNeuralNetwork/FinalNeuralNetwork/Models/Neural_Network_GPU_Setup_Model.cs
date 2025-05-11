@@ -23,10 +23,29 @@ namespace FinalNeuralNetwork.Models
         public required double[] Input {  get; set; } 
         public required double[] Gradient{  get; set; }
         public required int NumberOfThreads {  get; set; }
+        public required double[] TotalError { get; set; }
     }
 
     public class NeuralNetworkGpuSetup
     {
+        public required Accelerator Accelerator {  get; set; }
+        public required Action
+            <
+            Index1D,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<int, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<int, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<int, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<int, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            ArrayView1D<double, Stride1D.Dense>,
+            int
+            > Kernel {  get; set; }
         public required MemoryBuffer1D<double,Stride1D.Dense> BatchBuffer {  get; set; }
         public required MemoryBuffer1D<int, Stride1D.Dense> BatchOffsetsBuffer { get; set; }
         public required MemoryBuffer1D<double, Stride1D.Dense> ValidPredictionsBuffer {  get; set; }
@@ -38,6 +57,7 @@ namespace FinalNeuralNetwork.Models
         public required MemoryBuffer1D<double, Stride1D.Dense> ForwardDataBuffer { get; set; }
         public required MemoryBuffer1D<double, Stride1D.Dense> InputBuffer {  get; set; }
         public required MemoryBuffer1D<double, Stride1D.Dense> GradientBuffer {  get; set; }
+        public required MemoryBuffer1D<double,Stride1D.Dense> TotalErrorBuffer {  get; set; }
         public required int NumberOfThreads { get; set; }
 
     }

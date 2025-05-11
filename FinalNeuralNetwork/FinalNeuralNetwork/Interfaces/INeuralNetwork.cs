@@ -48,6 +48,11 @@ namespace FinalNeuralNetwork.Interfaces
         int OutputSize {  get; }
 
         /// <summary>
+        /// Get the GPU Setup.
+        /// </summary>
+        NeuralNetworkGpuSetup GpuSetup { get; }
+
+        /// <summary>
         /// Append layer to the network. Biases of neurons will be created randomly
         /// </summary>
         /// <param name="neuronsCount">Number of neurons that layer should contain</param>
